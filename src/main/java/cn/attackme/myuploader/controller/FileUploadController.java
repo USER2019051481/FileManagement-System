@@ -21,9 +21,11 @@ public class FileUploadController {
     private FileService fileService;
 
     @PostMapping("/")
-    public void upload(String name,
-                       String md5,
-                       MultipartFile file) throws IOException {
-        fileService.upload(name, md5,file);
+    public void multiUpload(String[] names,
+                            String[] md5s,
+                            MultipartFile[] files) throws IOException {
+        for (int i = 0; i < files.length; i++) {
+            fileService.upload(names[i], md5s[i], files[i]);
+        }
     }
 }
