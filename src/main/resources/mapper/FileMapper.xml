@@ -8,10 +8,11 @@
         <result column="md5" property="md5" />
         <result column="path" property="path" />
         <result column="upload_time" property="uploadTime" />
+        <result column="extractKeys_data" property="extractKeysData" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        id,name,md5,path,upload_time
+        id,name,md5,path,upload_time,extractKeys_data
     </sql>
 
     <select id="getByName" parameterType="java.lang.String" resultMap="BaseResultMap">
@@ -29,7 +30,7 @@
     </select>
 
     <insert id="save" parameterType="cn.attackme.myuploader.model.File" keyProperty="id" useGeneratedKeys="true">
-        insert into file(name,md5,path,upload_time) values(#{name},#{md5},#{path},#{uploadTime})
+        insert into file(name,md5,path,upload_time ) values(#{name},#{md5},#{path},#{uploadTime} )
     </insert>
 
     <update id="update" parameterType="cn.attackme.myuploader.model.File" >
@@ -47,6 +48,9 @@
                 </if>
                 <if test="uploadTime != null">
                     upload_time = #{uploadTime},
+                </if>
+                <if test="extractKeysData != null">
+                    extractKeys_data = #{extractKeysData},
                 </if>
             </set>
             where id = #{id}
@@ -82,6 +86,9 @@
             </if>
             <if test="uploadTime != null">
                 and upload_time = #{uploadTime}
+            </if>
+            <if test="uploadTime != null">
+                and extractKeys_data = #{extractKeysData}
             </if>
         </where>
     </select>

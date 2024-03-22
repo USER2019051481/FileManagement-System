@@ -2,6 +2,7 @@ package cn.attackme.myuploader.controller;
 
 import cn.attackme.myuploader.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,11 +22,12 @@ public class FileUploadController {
     private FileService fileService;
 
     @PostMapping("/")
-    public void multiUpload(String[] names,
-                            String[] md5s,
-                            MultipartFile[] files) throws IOException {
+    public ResponseEntity multiUpload(String[] names,
+                                      String[] md5s,
+                                      MultipartFile[] files) throws IOException {
         for (int i = 0; i < files.length; i++) {
             fileService.upload(names[i], md5s[i], files[i]);
         }
+        return ResponseEntity.ok(200) ;
     }
 }

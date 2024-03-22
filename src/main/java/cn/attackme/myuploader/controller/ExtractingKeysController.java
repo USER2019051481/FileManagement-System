@@ -6,10 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -18,6 +15,7 @@ import java.util.Map;
 
 @RestController
 @Slf4j
+@RequestMapping("/ExtractKeys")
 public class ExtractingKeysController {
     @Autowired
     private AnnotationService annotationService ;
@@ -25,10 +23,13 @@ public class ExtractingKeysController {
     /**
      * 提取JSON中键，存入数据库file表格的extractKeys_data属性中
      * @param payload OBIS的JSON数值
-     * @param name  对应的模板名称
+     * @param filename  对应的模板名称
      */
-    @PostMapping("/extractKeys")
-    public ResponseEntity extractKeys(@RequestBody Map<String, Object> payload, @RequestHeader String name ) {
+
+    //TODO :要解决的问题： RequestHeader中不能存入中文
+
+    @PostMapping("/{filename:.+}")
+    public ResponseEntity extractKeys(@RequestBody Map<String, Object> payload, @PathVariable String filename ) {
         List<String> annotationNames = new ArrayList<>();
 
         // 使用 Jackson 解析 JSON
@@ -42,7 +43,7 @@ public class ExtractingKeysController {
         // 提取出的批注名称列表转为String类型
         String annotationNamesString = annotationNames.toString();
         // 根据前端给的模板名称，存入数据库
-        annotationService.saveAnnotationNames(annotationNamesString,name);
+        annotationService.saveAnnotationNames(annotationNamesString,filename);
 
         // 返回解析成功
         return ResponseEntity.ok(200);
