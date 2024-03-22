@@ -14,6 +14,13 @@
         id,name,md5,path,upload_time
     </sql>
 
+    <select id="getByName" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List" />
+        from file
+        where name = #{name}
+    </select>
+
     <select id="getById" parameterType="java.lang.Long" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List" />
@@ -44,6 +51,12 @@
             </set>
             where id = #{id}
         </if>
+    </update>
+
+    <update id="updateDataByName" parameterType="java.lang.String" >
+        UPDATE file
+        SET extractKeys_data = #{extractKeys_data}
+        WHERE name = #{name}
     </update>
 
     <delete id="deleteById" parameterType="java.lang.Long">

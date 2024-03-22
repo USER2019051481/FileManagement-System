@@ -33,7 +33,7 @@ public class FileService {
                        MultipartFile file) throws IOException {
         String path = UploadConfig.path + generateFileName();
         FileUtils.write(path, file.getInputStream());
-        fileDao.save(new File(name, md5, path, new Date()));
+        fileDao.save(new File(name, md5, path, new Date(),""));
     }
 
     /**
@@ -56,7 +56,7 @@ public class FileService {
         addChunk(md5,chunk);
         if (isUploaded(md5)) {
             removeKey(md5);
-            fileDao.save(new File(name, md5,UploadConfig.path + fileName, new Date()));
+            fileDao.save(new File(name, md5,UploadConfig.path + fileName, new Date(),""));
         }
     }
 

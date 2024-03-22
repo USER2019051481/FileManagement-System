@@ -22,14 +22,16 @@ public class File implements Serializable {
     private String md5;
     private String path;
     private Date uploadTime;
+    private String extractKeys_data;
 
     public File() {
     }
 
-    public File(String name, String md5, String path, Date uploadTime) {
+    public File(String name, String md5, String path, Date uploadTime,String extractKeys_data) {
         this.name = name;
         this.md5 = md5;
         this.path = path;
         this.uploadTime = uploadTime;
+        this.extractKeys_data = extractKeys_data ;
     }
 }
