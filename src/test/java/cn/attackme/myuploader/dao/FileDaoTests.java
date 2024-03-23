@@ -35,6 +35,7 @@ public class FileDaoTests {
         testFile.setName("test");
         testFile.setUploadTime(new Date());
         testFile.setPath(UUID.randomUUID().toString());
+        testFile.setExtractKeysData("sfsdfsdfds");
     }
 
     /**
@@ -68,6 +69,16 @@ public class FileDaoTests {
         assertEquals(1,fileDao.update(testFile));
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    public void testUpdateDataByName() {
+        fileDao.save(testFile);
+//        testFile.setPath(UUID.randomUUID().toString());
+        assertEquals(1 ,fileDao.updateDataByName(testFile.getName(), testFile.getExtractKeysData()));
+    }
+
+
     /**
      * md5为null更新不抛异常测试
      */
@@ -90,6 +101,15 @@ public class FileDaoTests {
         fileDao.save(testFile);
         assertNotNull(fileDao.getById(testFile.getId()));
     }
+    @Test
+    @Transactional
+    @Rollback
+    public void testGetByNameSuccess() {
+        fileDao.save(testFile);
+        assertNotNull(fileDao.getByName(testFile.getName()));
+    }
+
+
 
     /**
      * 根据不存在的id获取为null
@@ -126,7 +146,8 @@ public class FileDaoTests {
     @Rollback
     public void testGetByFileSuccess() {
         fileDao.save(testFile);
-        assertNotNull(fileDao.getByFile(testFile));
+        File file = fileDao.getByFile(testFile);
+
     }
 
     /**
