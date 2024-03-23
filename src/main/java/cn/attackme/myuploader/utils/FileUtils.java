@@ -1,62 +1,74 @@
 package cn.attackme.myuploader.utils;
 
 
+import cn.attackme.myuploader.config.CalculateConfig;
+import cn.attackme.myuploader.repository.FileRepository;
+import cn.attackme.myuploader.utils.exception.FileDuplicateException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.util.unit.DataSize;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.*;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
 
 /**
  * 文件操作工具类
  */
+@Component
 public class FileUtils {
 
+    @Autowired
+    private FileRepository fileRepository;
     /**
-     * 写入文件
+     * 写入文件并计算MD5值
      * @param target
      * @param src
      * @throws IOException
+     * @throws NoSuchAlgorithmException
      */
-    public static void write(String target, InputStream src) throws IOException {
+    public static String write(String target, InputStream src) throws IOException, NoSuchAlgorithmException {
         OutputStream os = new FileOutputStream(target);
+        MessageDigest md = MessageDigest.getInstance(CalculateConfig.factor);
         byte[] buf = new byte[1024];
         int len;
         while (-1 != (len = src.read(buf))) {
             os.write(buf,0,len);
+            md.update(buf, 0, len); // 更新MD5哈希值
         }
+
         os.flush();
         os.close();
+
+        byte[] digest = md.digest();
+
+        // 将字节数组转换为十六进制字符串
+        StringBuilder result = new StringBuilder();
+        for (byte b : digest) {
+            result.append(String.format("%02x", b));
+        }
+
+        return result.toString();
     }
 
-    /**
-     * 分块写入文件
-     * @param target
-     * @param targetSize
-     * @param src
-     * @param srcSize
-     * @param chunks
-     * @param chunk
-     * @throws IOException
-     */
-    public static void writeWithBlok(String target, Long targetSize, InputStream src, Long srcSize, Integer chunks, Integer chunk) throws IOException {
-        RandomAccessFile randomAccessFile = new RandomAccessFile(target,"rw");
-        randomAccessFile.setLength(targetSize);
-        if (chunk == chunks - 1) {
-            randomAccessFile.seek(targetSize - srcSize);
-        } else {
-            randomAccessFile.seek(chunk * srcSize);
+    //检查文件是否重复上传
+    public void checkFileDuplicate(String name, String md5) {
+        if (fileRepository.findByMd5(md5) != null) {
+            throw new FileDuplicateException("文件已存在: " + fileRepository.findByMd5(md5).getName());
         }
-        byte[] buf = new byte[1024];
-        int len;
-        while (-1 != (len = src.read(buf))) {
-            randomAccessFile.write(buf,0,len);
+
+        if (fileRepository.findByName(name) != null) {
+            throw new FileDuplicateException("文件名重复: "+ name);
         }
-        randomAccessFile.close();
     }
 
-    /**
-     * 生成随机文件名
-     * @return
-     */
-    public static String generateFileName() {
-        return UUID.randomUUID().toString();
+    //检查文件大小
+    public void checkFileSize(MultipartFile file, DataSize maxSize) {
+        if (file.getSize() > maxSize.toBytes()) {
+            throw new FileDuplicateException("文件大小超过限制");
+        }
     }
+
 }
