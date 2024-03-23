@@ -26,8 +26,6 @@ public class ExtractingKeysController {
      * @param filename  对应的模板名称
      */
 
-    //TODO :要解决的问题： RequestHeader中不能存入中文
-
     @PostMapping("/{filename:.+}")
     public ResponseEntity extractKeys(@RequestBody Map<String, Object> payload, @PathVariable String filename ) {
         List<String> annotationNames = new ArrayList<>();
