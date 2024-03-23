@@ -42,11 +42,6 @@ public class FileUploadController {
     private DataSize maxRequestSize;
 
     @PostMapping("/")
-    public void multiUpload(String[] names,
-                            String[] md5s,
-                            MultipartFile[] files) throws IOException {
-        for (int i = 0; i < files.length; i++) {
-            fileService.upload(names[i], md5s[i], files[i]);
     public ResponseEntity<String> multiUpload(MultipartFile[] files) {
         List<String> errorsizeFiles = new ArrayList<>();
         List<String> dupFiles = new ArrayList<>();
