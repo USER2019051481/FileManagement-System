@@ -3,8 +3,10 @@ package cn.attackme.myuploader.entity;
 import lombok.Getter;
 import lombok.Setter;
 
+
+
+
 import javax.persistence.*;
-import java.math.BigInteger;
 import java.util.Date;
 
 @Entity
@@ -12,6 +14,8 @@ import java.util.Date;
 @Getter
 @Setter
 public class File {
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,6 +34,10 @@ public class File {
 
     @Column(name = "extractKeys_data", columnDefinition = "LONGTEXT")
     private String extractKeys_data;
+
+
+
+
 
 }
 
