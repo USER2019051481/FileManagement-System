@@ -1,15 +1,24 @@
 spring:
   datasource:
     username: root
-    password: 20010127lyl
-    url: jdbc:mysql:///MyUploader?useUnicode=true&characterEncoding=utf-8&serverTimeZone=UTC&useSSL=false
-    driver-class-name: com.mysql.jdbc.Driver
+    password: root
+    url: jdbc:mysql://localhost:3306/MyUploader?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
+    driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
     multipart:
-      max-file-size: 10000Mb
-      max-request-size: 100000Mb
-mybatis:
-  mapper-locations: classpath:mapper/*Mapper.xml
-  type-aliases-package: cn.attackme.myuploader.model
+      max-file-size: 1000MB
+      max-request-size: 100000MB
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+
 upload:
   path: ./upload/
+
+calculate:
+  value: "MD5"
+
+server:
+  port: 8080

@@ -15,8 +15,11 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * 文件下载
+ */
 @Controller
-    @RequestMapping("/DownloadFile")
+@RequestMapping("/DownloadFile")
 public class FileDownloadController {
     private static final String DOWNLOAD_DIRECTORY = "./upload/"; // 您的文件存放目录
 

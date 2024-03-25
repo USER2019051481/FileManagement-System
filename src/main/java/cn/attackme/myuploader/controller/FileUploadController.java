@@ -40,7 +40,9 @@ public class FileUploadController {
 
     @PostMapping("/")
     public ResponseEntity<String> multiUpload(@RequestHeader MultipartFile[] files) {
+        // 用于存储文件大小超过限制的文件名
         List<String> errorsizeFiles = new ArrayList<>();
+        // 用于存储已存在或文件名重复的文件名
         List<String> dupFiles = new ArrayList<>();
 
         long totalFileSize = 0;
@@ -50,7 +52,8 @@ public class FileUploadController {
                 try {
                     fileUtils.checkFileSize(file, maxFileSize);
                     totalFileSize += file.getSize();
-                    FileDTO fileDTO = convertToDTO(file);
+                    FileDTO fileDTO = fileService.convertToDTO(file);
+
                     fileService.upload(fileDTO);
                 } catch (FileSizeExceededException e) {
                     errorsizeFiles.add(file.getOriginalFilename());
@@ -78,14 +81,4 @@ public class FileUploadController {
     }
 
 
-    private FileDTO convertToDTO(MultipartFile file) throws IOException, NoSuchAlgorithmException {
-        FileDTO fileDTO = new FileDTO();
-        String path = UploadConfig.path + file.getOriginalFilename();
-        fileDTO.setName(file.getOriginalFilename());
-        fileDTO.setPath(path);
-        fileDTO.setMd5(FileUtils.write(path, file.getInputStream()));
-        fileDTO.setUploadTime(new Date());
-        fileDTO.setExtractKeysData("");
-        return fileDTO;
-    }
 }
