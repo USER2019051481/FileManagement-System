@@ -1,7 +1,7 @@
 package cn.attackme.myuploader.controller;
 
 
-import cn.attackme.myuploader.entity.File;
+import cn.attackme.myuploader.entity.FileEntity;
 import cn.attackme.myuploader.repository.FileRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +22,7 @@ public class ExtractingKeysDownloadController {
 
     @GetMapping("/{filename:.+}")
     public ResponseEntity<String> downloadExtractingKeys(@PathVariable String filename) {
-        File file = fileRepository.getByName(filename);
+        FileEntity file = fileRepository.getByName(filename);
 
         System.out.println("file:"+file.getExtractKeys_data() +file.getId()+file.getUpload_time() );
         return  ResponseEntity.ok().body(file.getExtractKeys_data()) ;

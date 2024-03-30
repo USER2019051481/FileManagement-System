@@ -1,13 +1,19 @@
 package cn.attackme.myuploader.controller;
 
-import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.dto.FileDTO;
+
 import cn.attackme.myuploader.service.FileService;
-import cn.attackme.myuploader.utils.FileUtils;
+import cn.attackme.myuploader.service.Mapper.FileMapper;
+import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
+
+
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.unit.DataSize;
@@ -15,9 +21,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+
 import java.util.ArrayList;
-import java.util.Date;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,11 +32,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/File")
 @CrossOrigin
+@Slf4j
 public class FileUploadController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private FileUtils fileUtils;
+    private HFileUtils fileUtils;
+    @Autowired
+    private FileMapper fileMapper ;
+
 
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
@@ -38,7 +48,7 @@ public class FileUploadController {
     @Value("${spring.servlet.multipart.max-request-size}")
     private DataSize maxRequestSize;
 
-    @PostMapping("/")
+    @PostMapping("/Upload")
     public ResponseEntity<String> multiUpload(@RequestHeader MultipartFile[] files) {
         // 用于存储文件大小超过限制的文件名
         List<String> errorsizeFiles = new ArrayList<>();
@@ -80,5 +90,28 @@ public class FileUploadController {
         }
     }
 
+    /**
+     *  判断上传文件与已有文件是否存在冲突
+     * @param files 上传文件
+     * @return 冲突内容
+     * @throws IOException
+     */
+    @GetMapping(value = "/conflicts", produces = "application/json; charset=UTF-8")
+    public ResponseEntity<List<String>> getFileConflicts(@RequestHeader MultipartFile[] files) throws IOException {
+
+
+        // 存储冲突行的列表
+        List<String> conflictLines = new ArrayList<>() ;
+        // 调用FileService获取冲突信息
+        boolean hasConflict = fileService.isConflict(files,conflictLines) ;
+
+        String jsonString = JSONObject.toJSONString(conflictLines);
+        if(hasConflict){
+            return ResponseEntity.ok(Collections.singletonList(jsonString));
+        }else{
+            return ResponseEntity.notFound().build() ;
+        }
+
+    }
 
 }
