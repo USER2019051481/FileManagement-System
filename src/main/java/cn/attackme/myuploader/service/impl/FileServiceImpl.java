@@ -7,14 +7,14 @@ import cn.attackme.myuploader.repository.FileRepository;
 import cn.attackme.myuploader.service.FileService;
 import cn.attackme.myuploader.utils.FileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
+import cn.attackme.myuploader.utils.exception.FileNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.util.*;
 
 @Service
 public class FileServiceImpl implements FileService {
@@ -33,7 +33,40 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+    public Map<String, List<String>> deleteFiles(List<String> names) {
+        List<String> successfullyDeletedFiles = new ArrayList<>();
+        List<String> failedToDeleteFiles = new ArrayList<>();
+        List<String> excepToDeleteFiles = new ArrayList<>();
 
+        for (String name : names) {
+            boolean databaseFileDeleted = false;
+            boolean localFileDeleted = false;
+            try {
+               databaseFileDeleted = fileUtils.deleteDatabaseFile(name);
+            } catch (FileNotFoundException e) {
+                excepToDeleteFiles.add(e.getMessage());
+            }
+
+            try {
+                localFileDeleted = fileUtils.deleteLocalFile(name);
+            } catch (FileNotFoundException e) {
+                excepToDeleteFiles.add(e.getMessage());
+            }
+
+            if (databaseFileDeleted || localFileDeleted) {
+                successfullyDeletedFiles.add(name);
+            } else {
+                failedToDeleteFiles.add(name);
+            }
+        }
+
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("successfullyDeletedFiles", successfullyDeletedFiles);
+        result.put("failedToDeleteFiles", failedToDeleteFiles);
+        result.put("存在的特殊情况", excepToDeleteFiles);
+
+        return result;
+    }
 
     public File convertToEntity(FileDTO fileDTO) {
         File file = new File();

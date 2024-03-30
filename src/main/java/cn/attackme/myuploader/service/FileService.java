@@ -1,18 +1,13 @@
 package cn.attackme.myuploader.service;
 
-import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.dto.FileDTO;
 import cn.attackme.myuploader.entity.File;
-import cn.attackme.myuploader.repository.FileRepository;
-import cn.attackme.myuploader.utils.exception.FileDuplicateException;
-import cn.attackme.myuploader.utils.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -25,6 +20,8 @@ public interface FileService {
     * @param fileDTO 文件DTO
     */
     public void upload(FileDTO fileDTO) ;
+
+    public Map<String, List<String>> deleteFiles(List<String> names);
 
     /**
      * DTO转为entity

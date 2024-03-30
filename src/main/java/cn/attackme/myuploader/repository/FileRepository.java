@@ -22,7 +22,7 @@ public interface FileRepository extends JpaRepository<File, Long>{
 
     File getById(BigInteger id);
 
-    void deleteById(Long id);
+    void deleteByName(String name);
 
     File save(File file);
 }
