@@ -1,14 +1,13 @@
 spring:
   datasource:
     username: root
-    password: root
+    password: 20010127lyl
     url: jdbc:mysql://localhost:3306/MyUploader?useUnicode=true&characterEncoding=utf-8&serverTimezone=UTC&useSSL=false
     driver-class-name: com.mysql.cj.jdbc.Driver
   servlet:
     multipart:
       max-file-size: 1000MB
       max-request-size: 100000MB
-
   jpa:
     database-platform: org.hibernate.dialect.MySQL8Dialect
     hibernate:
@@ -17,8 +16,13 @@ spring:
 upload:
   path: ./upload/
 
+
+basePackage:
+  path: "cn.attackme.myuploader.domain"
+
 calculate:
   value: "MD5"
 
 server:
   port: 8080
+
