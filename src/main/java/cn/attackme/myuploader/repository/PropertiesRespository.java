@@ -7,7 +7,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PropertiesRespository  extends JpaRepository<PropertyEntity, Long> {
+    // 存储PropertyEntity
     PropertyEntity save(PropertyEntity propertyEntity) ;
 
+    // 通过ClassName查找PropertyEntity
     PropertyEntity findByClassName(String className);
+
+    // 通过ClassName查找PropertyEntity全部信息
+    PropertyEntity findAllByClassName(String ClassName) ;
 }
