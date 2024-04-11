@@ -38,8 +38,7 @@ public class FileUploadController {
     private FileService fileService;
     @Autowired
     private HFileUtils fileUtils;
-    @Autowired
-    private FileMapper fileMapper ;
+
 
 
     @Value("${spring.servlet.multipart.max-file-size}")
@@ -96,14 +95,14 @@ public class FileUploadController {
      * @return 冲突内容
      * @throws IOException
      */
-    @GetMapping(value = "/conflicts", produces = "application/json; charset=UTF-8")
+        @GetMapping(value = "/conflicts", produces = "application/json; charset=UTF-8")
     public ResponseEntity<List<String>> getFileConflicts(@RequestHeader MultipartFile[] files) throws IOException {
 
 
         // 存储冲突行的列表
         List<String> conflictLines = new ArrayList<>() ;
         // 调用FileService获取冲突信息
-        boolean hasConflict = fileService.isConflict(files,conflictLines) ;
+       boolean hasConflict = fileService.isConflict(files,conflictLines) ;
 
         String jsonString = JSONObject.toJSONString(conflictLines);
         if(hasConflict){

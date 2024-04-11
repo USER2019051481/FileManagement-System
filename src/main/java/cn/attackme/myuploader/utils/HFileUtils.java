@@ -23,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
  * 文件操作工具类
  */
 @Component
-public class FileUtils {
+public class HFileUtils {
 
     @Autowired
     private FileRepository fileRepository;

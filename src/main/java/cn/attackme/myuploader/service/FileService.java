@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -42,5 +43,5 @@ public interface FileService {
     File getFileByName(String fileName);
 
 
-
+    Map<String, List<String>> deleteFiles(List<String> names);
 }

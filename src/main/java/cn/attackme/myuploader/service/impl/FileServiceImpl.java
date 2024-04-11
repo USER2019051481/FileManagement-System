@@ -10,6 +10,7 @@ import cn.attackme.myuploader.service.Mapper.FileMapper;
 import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 
+import cn.attackme.myuploader.utils.exception.FileNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.poi.hwpf.HWPFDocument;
@@ -27,8 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -165,7 +165,14 @@ public class FileServiceImpl implements FileService {
     // 比较上传文件批注值和服务端文件的段落内容是否相同
     private boolean isCommentsParagraphEqual(MultipartFile file, String commentText,int i) throws IOException {
         try (HWPFDocument document = new HWPFDocument(file.getInputStream())) {
+
             Range range = document.getCommentsRange();
+
+            if (i >= range.numParagraphs()) {
+                // 处理索引越界的情况
+                return false;
+            }
+
             Paragraph rangeParagraph = range.getParagraph(i);
             String text = rangeParagraph.text() ;
             // 有内容相同，不存在冲突

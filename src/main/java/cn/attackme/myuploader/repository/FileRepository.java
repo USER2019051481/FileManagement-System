@@ -23,6 +23,7 @@ public interface FileRepository extends JpaRepository<FileEntity, Long>{
     FileEntity getById(BigInteger id);
 
     void deleteById(Long id);
+    void deleteByName(String name);
 
     FileEntity save(FileEntity file);
 }
