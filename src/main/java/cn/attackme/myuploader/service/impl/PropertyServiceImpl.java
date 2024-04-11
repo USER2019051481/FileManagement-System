@@ -28,32 +28,59 @@ public class PropertyServiceImpl implements PropertyService {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> domainClasses = reflections.getTypesAnnotatedWith(Entity.class);
         for(Class<?> clazz : domainClasses){
-            String className = clazz.getSimpleName();
-            log.debug("==============================>className:"+className);
-            Map<String, String> propertyMap = new HashMap<>();
-            ApiModel annotationClassName = clazz.getAnnotation(ApiModel.class);
-            if(annotationClassName==null){
-                log.debug(className+": 该类没有中文名字！");
-            }
-            String classNameChinese = annotationClassName.description();
 
-            Field[] fields = clazz.getDeclaredFields();
-            for(Field field: fields){
-                Annotation annotation = field.getAnnotation(Column.class);
-                if(annotation == null){
-                    continue;
-                }
-                String fieldName = field.getName();
-                ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
-                String property = (apiModelProperty != null) ? apiModelProperty.value() : "没有中文注解！";
-                propertyMap.put(fieldName,property) ;
-
-            }
-
-            saveDomainValues(propertiesRespository,className,classNameChinese,propertyMap);
-
+            processClass(clazz,propertiesRespository) ;
         }
     }
+
+    private void processClass(Class<?> clazz, PropertiesRespository propertiesRespository) {
+        String className = clazz.getSimpleName() ;
+        if(className.equals("Object")){
+            log.debug(className +"==Object");
+            return ;
+        }
+        log.debug("======================>className:"+className) ;
+        Map<String,String> propertyMap = new HashMap<>() ;
+        ApiModel annotationClassName = clazz.getAnnotation(ApiModel.class);
+        String classNameChinese = "" ;
+        if(annotationClassName != null){
+            classNameChinese = annotationClassName.description();
+        }
+
+        // 处理父类属性
+        Class<?> superClass = clazz.getSuperclass() ;
+        if(superClass != null){
+            processClass(superClass,propertiesRespository);
+            Field[] superFields = superClass.getDeclaredFields();
+            for (Field superField : superFields) {
+                Annotation superAnnotation = superField.getAnnotation(Column.class);
+                if (superAnnotation == null) {
+                    continue;
+                }
+                String superFieldName = superField.getName();
+                ApiModelProperty superApiModelProperty = superField.getAnnotation(ApiModelProperty.class);
+                String superProperty = (superApiModelProperty != null) ? superApiModelProperty.value() : "没有中文注解！";
+                propertyMap.put(superFieldName, superProperty);
+            }
+        }
+
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            Annotation annotation = field.getAnnotation(Column.class);
+            if (annotation == null) {
+                continue;
+            }
+            String fieldName = field.getName();
+            ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
+            String property = (apiModelProperty != null) ? apiModelProperty.value() : "没有中文注解！";
+            propertyMap.put(fieldName, property);
+        }
+
+        saveDomainValues(propertiesRespository, className, classNameChinese, propertyMap);
+
+    }
+
+
 
     /**
      * 将扫描到的属性值和中文值，存入数据库

@@ -17,6 +17,8 @@ import java.time.LocalDate;
 @Data
 @ApiModel(description = "入院诊断")
 @Entity
+@Table(name = "ad_admitting_diagnosis")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class AdAdmittingDiagnosis implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -28,7 +30,7 @@ public class AdAdmittingDiagnosis implements Serializable {
     /**
      * 排序
      */
-    @ApiModelProperty(value = "排序11")
+    @ApiModelProperty(value = "排序")
     @Column(name = "luna_sort")
     private Integer sort;
 
