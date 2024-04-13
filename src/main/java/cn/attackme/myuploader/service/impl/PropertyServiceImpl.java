@@ -28,42 +28,24 @@ public class PropertyServiceImpl implements PropertyService {
         Reflections reflections = new Reflections(basePackage);
         Set<Class<?>> domainClasses = reflections.getTypesAnnotatedWith(Entity.class);
         for(Class<?> clazz : domainClasses){
-
-            processClass(clazz,propertiesRespository) ;
+            processClass(clazz,propertiesRespository,new HashMap<>()) ;
         }
     }
 
-    private void processClass(Class<?> clazz, PropertiesRespository propertiesRespository) {
+    private void processClass(Class<?> clazz, PropertiesRespository propertiesRespository, Map<String,String> propertyMap) {
+
         String className = clazz.getSimpleName() ;
-        if(className.equals("Object")){
-            log.debug(className +"==Object");
-            return ;
-        }
-        log.debug("======================>className:"+className) ;
-        Map<String,String> propertyMap = new HashMap<>() ;
+
         ApiModel annotationClassName = clazz.getAnnotation(ApiModel.class);
         String classNameChinese = "" ;
         if(annotationClassName != null){
             classNameChinese = annotationClassName.description();
         }
-
-        // 处理父类属性
-        Class<?> superClass = clazz.getSuperclass() ;
-        if(superClass != null){
-            processClass(superClass,propertiesRespository);
-            Field[] superFields = superClass.getDeclaredFields();
-            for (Field superField : superFields) {
-                Annotation superAnnotation = superField.getAnnotation(Column.class);
-                if (superAnnotation == null) {
-                    continue;
-                }
-                String superFieldName = superField.getName();
-                ApiModelProperty superApiModelProperty = superField.getAnnotation(ApiModelProperty.class);
-                String superProperty = (superApiModelProperty != null) ? superApiModelProperty.value() : "没有中文注解！";
-                propertyMap.put(superFieldName, superProperty);
-            }
+        if(className.equals("Object")){
+            // 如果是Object，则结束;
+            log.debug(className +"==Object");
+            return ;
         }
-
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             Annotation annotation = field.getAnnotation(Column.class);
@@ -76,7 +58,32 @@ public class PropertyServiceImpl implements PropertyService {
             propertyMap.put(fieldName, property);
         }
 
-        saveDomainValues(propertiesRespository, className, classNameChinese, propertyMap);
+
+        // 循环处理父类属性
+        // 处理父类属性
+        Class<?> superClass = clazz.getSuperclass() ;
+        while(superClass!= java.lang.Object.class && superClass != null){
+            Field[] superFields = superClass.getDeclaredFields();
+            for (Field superField : superFields) {
+                Annotation superAnnotation = superField.getAnnotation(Column.class);
+                if (superAnnotation == null) {
+                    continue;
+                }
+                String superFieldName = superField.getName();
+                ApiModelProperty superApiModelProperty = superField.getAnnotation(ApiModelProperty.class);
+                String superProperty = (superApiModelProperty != null) ? superApiModelProperty.value() : "没有中文注解！";
+                propertyMap.put(superFieldName, superProperty);
+            }
+            superClass = superClass.getSuperclass() ;
+        }
+
+        if(superClass== java.lang.Object.class){
+            saveDomainValues(  propertiesRespository,
+                    className,  classNameChinese,
+                    propertyMap) ;
+        }
+
+
 
     }
 
