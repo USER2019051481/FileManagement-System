@@ -21,6 +21,9 @@ public interface FileService {
     */
     public void upload(FileDTO fileDTO) ;
 
+    public List<String> queryFiles(String hospital);
+
+    public Map<String, List<String>> deleteFiles(List<String> names, String hospital);
 
     /**
      * MultipartFile转为FileDTO
@@ -29,7 +32,7 @@ public interface FileService {
      * @throws IOException
      * @throws NoSuchAlgorithmException
      */
-    FileDTO convertToDTO(MultipartFile file) throws IOException, NoSuchAlgorithmException;
+    FileDTO convertToDTO(MultipartFile file, String hospitalName) throws IOException, NoSuchAlgorithmException;
 
     /**
      * 判断是否存在冲突，并返回冲突行
@@ -42,6 +45,4 @@ public interface FileService {
 
     File getFileByName(String fileName);
 
-
-    Map<String, List<String>> deleteFiles(List<String> names);
 }

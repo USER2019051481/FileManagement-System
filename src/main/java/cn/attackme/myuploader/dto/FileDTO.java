@@ -18,4 +18,5 @@ public class FileDTO {
     private String path;
     private Date uploadTime;
     private String extractKeysData;
+    private String hospital;
 }

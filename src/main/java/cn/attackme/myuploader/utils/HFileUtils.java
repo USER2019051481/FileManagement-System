@@ -6,27 +6,39 @@ import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.repository.FileRepository;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
  * 文件操作工具类
  */
+@Slf4j
 @Component
 public class HFileUtils {
 
     @Autowired
     private FileRepository fileRepository;
+
+    public  void createUploadDirectory(String uploadPath) {
+        File directory = new File(uploadPath);
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+            if (created) {
+                log.info("创建上传文件夹 '" + uploadPath + "' 成功");
+            } else {
+                throw new RuntimeException("创建上传文件夹 '" + uploadPath + "' 失败");
+            }
+        }
+    }
+
     /**
      * 写入文件并计算MD5值
      * @param target
@@ -88,8 +100,8 @@ public class HFileUtils {
 
     @Transactional
     //删除数据库记录
-    public boolean deleteDatabaseFile(String name){
-        if (fileRepository.findByName(name) != null) {
+    public boolean deleteDatabaseFile(String name, String hospital){
+        if (fileRepository.findByNameAndHospital(name, hospital) != null) {
             fileRepository.deleteByName(name);
             return true;
         } else {

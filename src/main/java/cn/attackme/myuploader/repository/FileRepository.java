@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigInteger;
+import java.util.List;
 
 
 @Repository
@@ -14,6 +15,10 @@ public interface FileRepository extends JpaRepository<FileEntity, Long>{
     @Modifying
     @Query(value = "UPDATE FileEntity f SET f.extractKeys_data = :extractKeysData WHERE f.name = :name")
     int updateExtractKeysDataByName(@Param("name") String name, @Param("extractKeysData") String extractKeysData);
+
+    FileEntity findByNameAndHospital(String name, String hospital);
+
+    List<FileEntity> findAllByHospital(String hospital);
 
     FileEntity findByName(String name);
 

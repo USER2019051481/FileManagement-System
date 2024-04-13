@@ -57,8 +57,16 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+    public List<String> queryFiles(String hospital){
+        List<String> fileNames = new ArrayList<>();
+        List<FileEntity> files = fileRepository.findAllByHospital(hospital);
+        for (FileEntity file : files) {
+            fileNames.add(file.getName());
+        }
+        return fileNames;
+    }
 
-    public Map<String, List<String>> deleteFiles(List<String> names) {
+    public Map<String, List<String>> deleteFiles(List<String> names, String hospital) {
         List<String> successfullyDeletedFiles = new ArrayList<>();
         List<String> failedToDeleteFiles = new ArrayList<>();
         List<String> excepToDeleteFiles = new ArrayList<>();
@@ -67,18 +75,13 @@ public class FileServiceImpl implements FileService {
             boolean databaseFileDeleted = false;
             boolean localFileDeleted = false;
             try {
-               databaseFileDeleted = fileUtils.deleteDatabaseFile(name);
-            } catch (FileNotFoundException e) {
-                excepToDeleteFiles.add(e.getMessage());
-            }
-
-            try {
+                databaseFileDeleted = fileUtils.deleteDatabaseFile(name, hospital);
                 localFileDeleted = fileUtils.deleteLocalFile(name);
             } catch (FileNotFoundException e) {
                 excepToDeleteFiles.add(e.getMessage());
             }
 
-            if (databaseFileDeleted || localFileDeleted) {
+            if (databaseFileDeleted && localFileDeleted) {
                 successfullyDeletedFiles.add(name);
             } else {
                 failedToDeleteFiles.add(name);
@@ -93,20 +96,17 @@ public class FileServiceImpl implements FileService {
         return result;
     }
 
-
-
-    public FileDTO convertToDTO(MultipartFile file) throws IOException, NoSuchAlgorithmException {
+    public FileDTO   convertToDTO(MultipartFile file, String hospitalName) throws IOException, NoSuchAlgorithmException {
         FileDTO fileDTO = new FileDTO();
-        String path = UploadConfig.path + file.getOriginalFilename();
+        String path = uploadPath + file.getOriginalFilename();
         fileDTO.setName(file.getOriginalFilename());
         fileDTO.setPath(path);
         fileDTO.setMd5(HFileUtils.write(path, file.getInputStream()));
         fileDTO.setUploadTime(new Date());
         fileDTO.setExtractKeysData("");
+        fileDTO.setHospital(hospitalName);
         return fileDTO;
     }
-
-
 
     @Override
     public boolean isConflict(MultipartFile[] files, List<String> conflictLines) throws IOException {

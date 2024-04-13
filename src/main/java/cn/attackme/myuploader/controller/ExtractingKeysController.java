@@ -3,6 +3,9 @@ package cn.attackme.myuploader.controller;
 import cn.attackme.myuploader.service.AnnotationService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import java.util.Map;
 @RestController
 @Slf4j
 @RequestMapping("/ExtractKeys")
+@Api(tags = "Extract Keys", description = "解析第三方数据")
 public class ExtractingKeysController {
     @Autowired
     private AnnotationService annotationService ;
@@ -30,6 +34,8 @@ public class ExtractingKeysController {
      */
 
     @PostMapping("/{filename:.+}")
+    @ApiOperation(value = "解析第三方数据", notes = "解析Json文件获取英文形式参数")
+    @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     public ResponseEntity extractKeys(@RequestBody Map<String, Object> payload, @PathVariable String filename ) {
         List<String> annotationNames = new ArrayList<>();
 

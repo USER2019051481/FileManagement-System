@@ -38,7 +38,8 @@ public class FileEntity {
     @Column(name = "extractKeys_data", columnDefinition = "LONGTEXT")
     private String extractKeys_data;
 
-
+    @Column(name = "hospital")
+    private String hospital;
 
 }
 

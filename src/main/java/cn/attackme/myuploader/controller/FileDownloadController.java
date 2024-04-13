@@ -1,5 +1,6 @@
 package cn.attackme.myuploader.controller;
 
+import io.swagger.annotations.*;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,7 @@ import java.nio.file.Paths;
  */
 @Controller
 @RequestMapping("/DownloadFile")
+@Api(tags = "Download File ", description = "文件下载")
 public class FileDownloadController {
     private static final String DOWNLOAD_DIRECTORY = "./upload/"; // 您的文件存放目录
 
@@ -29,6 +31,8 @@ public class FileDownloadController {
      * @return 返回文件
      */
     @GetMapping("/{filename:.+}")
+    @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
+    @ApiOperation(value = "下载文件", notes = "根据文件名下载对应的文件")
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
         // 构造文件路径
         Path filePath = Paths.get(DOWNLOAD_DIRECTORY).resolve(filename).normalize();
