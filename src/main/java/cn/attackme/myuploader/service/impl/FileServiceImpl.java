@@ -1,6 +1,5 @@
 package cn.attackme.myuploader.service.impl;
 
-import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.dto.FileDTO;
 import cn.attackme.myuploader.entity.FileEntity;
 import cn.attackme.myuploader.repository.FileRepository;
@@ -16,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Paragraph;
 import org.apache.poi.hwpf.usermodel.Range;
-import org.apache.poi.sl.usermodel.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

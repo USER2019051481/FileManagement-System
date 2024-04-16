@@ -13,6 +13,6 @@ public interface PropertiesRespository  extends JpaRepository<PropertyEntity, Lo
     // 通过ClassName查找PropertyEntity
     PropertyEntity findByClassName(String className);
 
-    // 通过ClassName查找PropertyEntity全部信息
-    PropertyEntity findAllByClassName(String ClassName) ;
+    // 通过ClassName和最新的date查找PropertyEntity全部信息
+    PropertyEntity findFirstByClassNameOrderByDateDesc(String ClassName) ;
 }

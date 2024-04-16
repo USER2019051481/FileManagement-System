@@ -1,22 +1,22 @@
 package cn.attackme.myuploader.entity;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 
 @Entity
 @Table(name = "property_table")
-@Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
+@Data
 public class PropertyEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -32,6 +32,9 @@ public class PropertyEntity {
      */
     @Column(name = "class_chinese_name")
     private String ClassChineseName ;
+
+    @Column(name = "created_time")
+    private Date  date ;
 
     /**
      * 属性名：注释值

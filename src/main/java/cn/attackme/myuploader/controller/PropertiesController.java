@@ -2,8 +2,8 @@ package cn.attackme.myuploader.controller;
 
 
 import cn.attackme.myuploader.repository.PropertiesRespository;
-import cn.attackme.myuploader.service.PropertyService;
 
+import cn.attackme.myuploader.service.PropertyService;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +36,6 @@ public class PropertiesController {
      * @return
      */
     @GetMapping("/scan")
-
     public ResponseEntity<String> storePropertiesToDatabase(){
         propertyService.scanAndStoreDomainValues(propertiesRespository,basePackage);
         return ResponseEntity.ok("扫描domain下的属性名和中文值并存入数据库成功！");

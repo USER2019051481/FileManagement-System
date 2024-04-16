@@ -16,14 +16,14 @@ public class PropertiesDownloadController {
     private PropertiesRespository propertiesRespository ;
 
     /**
-     * 通过className返回相应的中文值和属性名
+     * 通过className返回相应PropertyEntity（查找数据库中最新的数据）
      * @param className
      * @return
      * @throws JsonProcessingException
      */
     @GetMapping("/download")
     public ResponseEntity<String> downloadProperties(@RequestHeader String className) throws JsonProcessingException {
-        PropertyEntity property = propertiesRespository.findAllByClassName(className);
+        PropertyEntity property = propertiesRespository.findFirstByClassNameOrderByDateDesc(className);
         ObjectMapper objectMapper = new ObjectMapper();
         String propertyString = objectMapper.writeValueAsString(property);
         return ResponseEntity.ok().body(propertyString);
