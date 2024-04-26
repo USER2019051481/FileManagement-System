@@ -1,14 +1,17 @@
 package cn.attackme.myuploader.service;
 
+import cn.attackme.myuploader.entity.PropertyEntity;
+import cn.attackme.myuploader.entity.PropertyMapEntity;
 import cn.attackme.myuploader.repository.PropertiesRespository;
 
 import java.util.Map;
+import java.util.Set;
 
 public interface PropertyService {
     // 通过反射扫描domain下的值
-    void scanAndStoreDomainValues(PropertiesRespository propertiesRespository , String basePackage);
+    void scanAndStoreDomainValues(PropertiesRespository propertiesRespository , String basePackage) throws IllegalAccessException, InstantiationException;
 
     // 将扫描到的值存入数据库
     void saveDomainValues(PropertiesRespository propertiesRespository,
-                          String className, String classNameChinese, Map<String,String > propertyMap);
+                          PropertyEntity newpropertyEntity, Set<PropertyMapEntity> propertyMapEntities);
 }

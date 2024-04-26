@@ -31,6 +31,7 @@ public class TokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException, IOException {
+        // 从header中拿到token
         String token = extractTokenFromRequest(request);
         if (token != null && validateToken(token)) {
             String hospitalName = extractHospitalName(token);
@@ -53,14 +54,19 @@ public class TokenFilter extends OncePerRequestFilter {
 
 
     public String extractHospitalName(String token) {
-        System.out.println(secretKey);
+//        System.out.println(secretKey);
         Claims claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();
+        return claims.getSubject();  //获取主体信息
     }
 
+    /**
+     * 验证一个给定的 JSON Web Token (JWT) 是否有效。
+     * @param token
+     * @return
+     */
     public Boolean validateToken(String token) {
         if(Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token)!=null)
             return true;

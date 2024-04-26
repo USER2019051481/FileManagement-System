@@ -36,7 +36,7 @@ public class PropertiesController {
      * @return
      */
     @GetMapping("/scan")
-    public ResponseEntity<String> storePropertiesToDatabase(){
+    public ResponseEntity<String> storePropertiesToDatabase() throws IllegalAccessException, InstantiationException {
         propertyService.scanAndStoreDomainValues(propertiesRespository,basePackage);
         return ResponseEntity.ok("扫描domain下的属性名和中文值并存入数据库成功！");
     }

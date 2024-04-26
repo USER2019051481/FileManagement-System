@@ -14,7 +14,7 @@ import java.time.LocalDate;
  */
 @Data
 
-@Entity
+//@Entity
 public abstract class AbstractReportCardEntity extends AbstractAuditingEntity {
 
     @ApiModelProperty("报告单位")

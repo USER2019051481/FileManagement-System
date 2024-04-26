@@ -16,7 +16,7 @@ import java.time.LocalDate;
  */
 @Data
 @ApiModel(description = "入院诊断")
-@Entity
+//@Entity
 @Table(name = "ad_admitting_diagnosis")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class AdAdmittingDiagnosis implements Serializable {

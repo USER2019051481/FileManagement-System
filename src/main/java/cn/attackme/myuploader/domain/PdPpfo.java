@@ -19,7 +19,7 @@ import java.util.Set;
  * 产后随访
  */
 @ApiModel(description = "产后随访")
-@Entity
+//@Entity
 public class PdPpfo implements Serializable {
 
     private static final long serialVersionUID = 1L;

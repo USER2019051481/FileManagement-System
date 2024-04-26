@@ -13,6 +13,7 @@ import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -49,6 +50,7 @@ public class FileUploadController {
 
     @Value("${spring.servlet.multipart.max-request-size}")
     private DataSize maxRequestSize;
+
 
     @PostMapping("/Upload")
     @ApiOperation(value = "文件上传", notes = "实现多文件上传，控制总文件大小<100000MB，同时判断文件重命名和内容重复情况")
@@ -108,13 +110,14 @@ public class FileUploadController {
     @GetMapping(value = "/conflicts", produces = "application/json; charset=UTF-8")
     @ApiOperation(value = "文件冲突检测", notes = "检查上传文件和已有文件之间的内容冲突信息")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
-    public ResponseEntity<List<String>> getFileConflicts(@RequestHeader MultipartFile[] files) throws IOException {
+    public ResponseEntity<List<String>> getFileConflicts(@RequestHeader("files") MultipartFile[] files) throws IOException {
 
 
         // 存储冲突行的列表
         List<String> conflictLines = new ArrayList<>() ;
         // 调用FileService获取冲突信息
        boolean hasConflict = fileService.isConflict(files,conflictLines) ;
+
 
         String jsonString = JSONObject.toJSONString(conflictLines);
         if(hasConflict){

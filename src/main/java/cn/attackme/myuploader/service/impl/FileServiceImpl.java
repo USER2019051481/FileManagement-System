@@ -118,13 +118,12 @@ public class FileServiceImpl implements FileService {
 
             if (existingFile == null) {
                 log.debug("服务端不存在相应文件。");
-                continue; // 如果文件不存在，继续处理下一个文件
+                continue;
             }
 
-            try (FileInputStream fis = new FileInputStream(existingFile);
+              FileInputStream fis = new FileInputStream(existingFile);
                  // 使用 Apache POI 的 HWPF 模块加载 '.doc' 文件，并读取其内容
-                 HWPFDocument document = new HWPFDocument(fis)) {
-
+              HWPFDocument document = new HWPFDocument(fis) ;
                 Range range = document.getRange();
                 int numParagraphs = range.numParagraphs();
                 Range commentsRange = document.getCommentsRange();
@@ -155,7 +154,7 @@ public class FileServiceImpl implements FileService {
                     }
                 }
             }
-        }
+
 
         return flag;
     }
