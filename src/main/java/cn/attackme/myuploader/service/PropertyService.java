@@ -14,4 +14,7 @@ public interface PropertyService {
     // 将扫描到的值存入数据库
     void saveDomainValues(PropertiesRespository propertiesRespository,
                           PropertyEntity newpropertyEntity, Set<PropertyMapEntity> propertyMapEntities);
+
+    // 将数据库中的值取出来进行拼接
+    String concatenateDatabaseValues(PropertiesRespository propertiesRespository,String className,String rootPackageName) ;
 }

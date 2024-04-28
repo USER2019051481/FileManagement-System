@@ -22,6 +22,7 @@ upload:
 
 basePackage:
   path: "cn.attackme.myuploader.domain"
+  root: "cn.attackme.myuploader"
 
 calculate:
   value: "MD5"

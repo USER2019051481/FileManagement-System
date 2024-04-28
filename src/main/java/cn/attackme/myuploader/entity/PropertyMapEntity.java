@@ -1,5 +1,6 @@
 package cn.attackme.myuploader.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.*;
 
 import javax.persistence.*;
@@ -33,11 +34,8 @@ public class PropertyMapEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "property_table_id")
+    @JsonBackReference // 作为反向引用
     private PropertyEntity propertyentity ;
-
-
-
-
 
 
 

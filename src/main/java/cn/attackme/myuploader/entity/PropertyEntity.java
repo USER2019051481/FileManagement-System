@@ -1,10 +1,10 @@
 package cn.attackme.myuploader.entity;
 
-import cn.attackme.myuploader.domain.Address;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.*;
 
 import javax.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
 
@@ -33,12 +33,14 @@ public class PropertyEntity {
     private String ClassChineseName ;
 
     @Column(name = "created_time")
-    private LocalDate date ;
+    private LocalDateTime date ;
 
 
     // 对应 PropertyMapEntity 中的 "propertyentity" 字段
     @OneToMany(mappedBy = "propertyentity", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference // 作为主控方
     private Set<PropertyMapEntity> propertyMaps = new HashSet<>();
+
 
 
 

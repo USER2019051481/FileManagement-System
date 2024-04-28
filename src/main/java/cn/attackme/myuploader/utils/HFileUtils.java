@@ -27,7 +27,7 @@ public class HFileUtils {
     @Autowired
     private FileRepository fileRepository;
 
-    public  void createUploadDirectory(String uploadPath) {
+    public void createUploadDirectory(String uploadPath) {
         File directory = new File(uploadPath);
         if (!directory.exists()) {
             boolean created = directory.mkdirs();

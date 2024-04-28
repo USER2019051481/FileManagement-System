@@ -91,8 +91,6 @@ public class IcPushDepartment implements Serializable {
     @Column(name = "sort")
     private Long sort;
 
-    @ElementCollection
-    @CollectionTable(name = "customer_addresses", joinColumns = @JoinColumn(name = "customer_id"))
-    private Set<Address> addresses = new HashSet<>(); // `Set` 类型的集合
+
 
 }

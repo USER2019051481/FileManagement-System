@@ -118,4 +118,5 @@ public class IcPushDoctor implements Serializable {
     @Column(name = "enable_ic_push_syphilis")
     private Boolean enableIcPushSyphilis;
 
+
 }

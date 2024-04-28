@@ -37,20 +37,18 @@ public class IcPushTemplate implements Serializable {
     @Column(name = "content")
     private String content;
 
-    /**
-     * 属性名：注释值
-     */
-    @ElementCollection
-    @MapKeyColumn(name = "property_name")
-//    @Column(name = "property_value")
-    private Map<String, Address> propertyMap = new HashMap<>();
+//    /**
+//     * 属性名：注释值
+//     */
+//    @ElementCollection
+//    @MapKeyColumn(name = "property_name")
+////    @Column(name = "property_value")
+//    private Map<String, Address> propertyMap = new HashMap<>();
 
 
 //    @ApiModelProperty(value = "排序")
 //    @Column(name = "sort")
 //    private Long sort;
 
-//    @ApiModelProperty(value = "是否启用推送")
-//    @Column(name = "enable_ic_push")
-//    private Boolean enableIcPush;
+
 }
