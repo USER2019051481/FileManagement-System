@@ -112,7 +112,6 @@ public class FileUploadController {
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     public ResponseEntity<List<String>> getFileConflicts(@RequestHeader("files") MultipartFile[] files) throws IOException {
 
-
         // 存储冲突行的列表
         List<String> conflictLines = new ArrayList<>() ;
         // 调用FileService获取冲突信息
@@ -126,6 +125,14 @@ public class FileUploadController {
             return ResponseEntity.notFound().build() ;
         }
 
+    }
+
+    @PostMapping("/validate")
+    @ApiOperation(value = "批注检测", notes = "上传文件前检查所填批注是否正确")
+    @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
+    public ResponseEntity<List<String>> validateComments(@RequestHeader("files") MultipartFile[] files) {
+        List<String> validationResults = fileService.validateComments(files);
+        return ResponseEntity.ok().body(validationResults);
     }
 
 }

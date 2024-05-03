@@ -99,9 +99,6 @@ public class PropertyServiceImpl implements PropertyService {
                     newpropertyEntity,
                     propertyMapEntities) ;
         }
-
-
-
     }
 
 
@@ -135,8 +132,6 @@ public class PropertyServiceImpl implements PropertyService {
             if (field.getAnnotation(Column.class) != null) {
                 createAndAddToPropertyMaps(field, newPropertyEntity, propertyMapEntities);
             }
-
-
         }
     }
 
