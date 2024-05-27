@@ -16,11 +16,13 @@ import java.net.MalformedURLException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
+
 /**
  * 文件下载
  */
 @Controller
-@RequestMapping("/DownloadFile")
+    @RequestMapping("/DownloadFile")
 @Api(tags = "Download File ", description = "文件下载")
 public class FileDownloadController {
     private static final String DOWNLOAD_DIRECTORY = "./upload/"; // 您的文件存放目录
@@ -42,7 +44,7 @@ public class FileDownloadController {
 
             if (resource.exists() || resource.isReadable()) {
                 return ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                        .contentType(MediaType.valueOf(TEXT_PLAIN_VALUE))
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
                         .body(resource);
             } else {

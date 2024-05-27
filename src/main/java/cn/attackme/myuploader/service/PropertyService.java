@@ -1,8 +1,10 @@
 package cn.attackme.myuploader.service;
 
+import cn.attackme.myuploader.dto.PropertyNodeDTO;
 import cn.attackme.myuploader.entity.PropertyEntity;
 import cn.attackme.myuploader.entity.PropertyMapEntity;
 import cn.attackme.myuploader.repository.PropertiesRespository;
+import org.json.JSONObject;
 
 import java.util.Map;
 import java.util.Set;
@@ -16,5 +18,8 @@ public interface PropertyService {
                           PropertyEntity newpropertyEntity, Set<PropertyMapEntity> propertyMapEntities);
 
     // 将数据库中的值取出来进行拼接
-    String concatenateDatabaseValues(PropertiesRespository propertiesRespository,String className,String rootPackageName) ;
+    PropertyNodeDTO concatenateDatabaseValues(PropertiesRespository propertiesRespository,
+                                              String className,
+                                              Set<String> currentPath,
+                                              int indentLevel) ;
 }
