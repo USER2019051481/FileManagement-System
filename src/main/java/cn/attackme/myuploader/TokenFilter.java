@@ -30,7 +30,7 @@ public class TokenFilter extends OncePerRequestFilter {
 
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException, ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // 从header中拿到token
         String token = extractTokenFromRequest(request);
         if (token != null && validateToken(token)) {

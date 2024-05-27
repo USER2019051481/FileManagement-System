@@ -40,6 +40,5 @@ public class FileEntity {
 
     @Column(name = "hospital")
     private String hospital;
-
 }
 
