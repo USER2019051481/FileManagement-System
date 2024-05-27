@@ -45,6 +45,4 @@ public interface FileService {
 
     File getFileByName(String fileName);
 
-    public List<String> validateComments(MultipartFile[] files);
-
 }

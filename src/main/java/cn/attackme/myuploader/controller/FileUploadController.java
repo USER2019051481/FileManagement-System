@@ -4,7 +4,7 @@ import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.dto.FileDTO;
 
 import cn.attackme.myuploader.service.FileService;
-import cn.attackme.myuploader.service.Mapper.FileMapper;
+import cn.attackme.myuploader.service.ValidateService;
 import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
@@ -13,7 +13,6 @@ import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -27,9 +26,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 文件上传
@@ -44,6 +43,8 @@ public class FileUploadController {
     private FileService fileService;
     @Autowired
     private HFileUtils fileUtils;
+    @Autowired
+    private ValidateService validateService;
 
     @Value("${spring.servlet.multipart.max-file-size}")
     private DataSize maxFileSize;
@@ -63,11 +64,7 @@ public class FileUploadController {
         }
         String hospitalName = (String) authentication.getPrincipal();
 
-        // 用于存储文件大小超过限制的文件名
-        List<String> errorsizeFiles = new ArrayList<>();
-        // 用于存储已存在或文件名重复的文件名
-        List<String> dupFiles = new ArrayList<>();
-
+        Map<String, String> filemessage = new HashMap<>();
         long totalFileSize = 0;
 
         try {
@@ -79,23 +76,19 @@ public class FileUploadController {
                     totalFileSize += file.getSize();
                     FileDTO fileDTO = fileService.convertToDTO(file,hospitalName);
                     fileService.upload(fileDTO);
+                    filemessage.put(file.getOriginalFilename(),"成功");
                 } catch (FileSizeExceededException e) {
-                    errorsizeFiles.add(file.getOriginalFilename());
+                    filemessage.put(file.getOriginalFilename(),e.getMessage());
                 } catch (FileDuplicateException e) {
-                    dupFiles.add(e.getMessage());
+                    filemessage.put(file.getOriginalFilename(),e.getMessage());
                 }
             }
-
             if (totalFileSize > maxRequestSize.toBytes()) {
                 return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("上传文件总大小超过最大限制");
             }
-            if (!errorsizeFiles.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("以下文件上传失败: " + errorsizeFiles);
-            }
-            if (!dupFiles.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.CONFLICT).body("以下文件已存在或文件名重复: " + dupFiles);
-            }
-            return ResponseEntity.ok("所有文件上传成功");
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonString = mapper.writeValueAsString(filemessage);
+            return ResponseEntity.ok(jsonString);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("文件上传失败");
         }
@@ -131,7 +124,7 @@ public class FileUploadController {
     @ApiOperation(value = "批注检测", notes = "上传文件前检查所填批注是否正确")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     public ResponseEntity<List<String>> validateComments(@RequestHeader("files") MultipartFile[] files) {
-        List<String> validationResults = fileService.validateComments(files);
+        List<String> validationResults = validateService.validate(files);
         return ResponseEntity.ok().body(validationResults);
     }
 

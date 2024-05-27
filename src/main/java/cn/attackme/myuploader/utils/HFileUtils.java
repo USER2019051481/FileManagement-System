@@ -6,6 +6,8 @@ import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.repository.FileRepository;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
+import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,7 +36,7 @@ public class HFileUtils {
             if (created) {
                 log.info("创建上传文件夹 '" + uploadPath + "' 成功");
             } else {
-                throw new RuntimeException("创建上传文件夹 '" + uploadPath + "' 失败");
+                throw new RuntimeException(uploadPath+": 创建上传文件夹失败");
             }
         }
     }
@@ -72,19 +74,19 @@ public class HFileUtils {
 
     //检查文件是否重复上传
     public void checkFileDuplicate(String name, String md5) {
+        if (fileRepository.findByName(name) != null) {
+            throw new FileDuplicateException("文件名重复");
+        }
         if (fileRepository.findByMd5(md5) != null) {
-            throw new FileDuplicateException("文件已存在: " + fileRepository.findByMd5(md5).getName());
+            throw new FileDuplicateException("文件内容重复");
         }
 
-        if (fileRepository.findByName(name) != null) {
-            throw new FileDuplicateException("文件名重复: "+ name);
-        }
     }
 
     //检查文件大小
-    public void checkFileSize(MultipartFile file, DataSize maxSize) {
+    public void checkFileSize(MultipartFile file, DataSize maxSize){
         if (file.getSize() > maxSize.toBytes()) {
-            throw new FileDuplicateException("文件大小超过限制");
+            throw new FileSizeExceededException("文件大小超过限制");
         }
     }
 
@@ -94,7 +96,7 @@ public class HFileUtils {
         if (localFile.exists()) {
             return localFile.delete();
         } else {
-            throw new FileNotFoundException("本地File '" + name + "' not found");
+            throw new FileNotFoundException(name + ":本地文件not found");
         }
     }
 
@@ -105,7 +107,7 @@ public class HFileUtils {
             fileRepository.deleteByName(name);
             return true;
         } else {
-            throw new FileNotFoundException("数据库中File '" + name + "' not found");
+            throw new FileNotFoundException(name+ ":数据库中文件not found");
         }
     }
 

@@ -10,6 +10,7 @@ import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.poi.hwpf.HWPFDocument;
@@ -158,7 +159,6 @@ public class FileServiceImpl implements FileService {
                 }
             }
 
-
         return flag;
     }
 
@@ -220,68 +220,6 @@ public class FileServiceImpl implements FileService {
         }
         log.debug(fileName+"文件不存在于服务端。");
         return null;
-    }
-
-    public static final Pattern SIMPLE_TEXT_DIRECTIVE_PATTERN = Pattern.compile("\\$(\\S?)\\{(\\S*?)\\}");
-    public static final Pattern TABLE_DIRECTIVE_PATTERN = Pattern.compile("#(\\S?)\\{(\\S*?)\\}");
-    public static final Pattern CHECKBOX_DIRECTIVE_PATTERN = Pattern.compile("@\\{(\\S*?)\\}");
-    public static final Pattern IMAGE_DIRECTIVE_PATTERN = Pattern.compile("(<<image.*?\\[)(.*)(\\].*?>>)");
-
-    public String extractComments(MultipartFile file) throws IOException {
-        // 从 MultipartFile 获取输入流
-        InputStream inputStream = file.getInputStream();
-        HWPFDocument document = new HWPFDocument(inputStream);
-        Range commentsRange = document.getCommentsRange();
-        int numComments = commentsRange.numParagraphs();
-        StringBuilder commentsContent = new StringBuilder(); // 用于存储批注内容
-        // 逐段获取批注内容
-        for (int i = 0; i < numComments; i++) {
-            Paragraph commentsRangeParagraph = commentsRange.getParagraph(i);
-            String commentText = commentsRangeParagraph.text();
-            // 将批注内容添加到 StringBuilder 中
-            commentsContent.append(commentText);
-        }
-        // 关闭文件输入流
-        inputStream.close();
-        // 返回批注内容
-        return commentsContent.toString();
-    }
-
-    public List<String> validateComments(MultipartFile[] files) {
-        List<String> result = new ArrayList<>();
-        for (MultipartFile file : files) {
-            try {
-                String comments = extractComments(file);
-                String[] commentsArray = comments.split("\\r");
-                List<String> invalidComments = new ArrayList<>();
-
-                // 验证每条批注是否符合指定的模式
-                for (String comment : commentsArray) {
-                    System.out.println(comment);
-                    if (!isValidComment(comment)) {
-                        invalidComments.add(comment);
-                    }
-                }
-                // 构建结果列表
-                if (!invalidComments.isEmpty()) {
-                    result.add("-- Invalid Comments:");
-                    result.addAll(invalidComments);
-                } else {
-                    result.add("-- All comments are valid.");
-                }
-            } catch (IOException e) {
-                result.add("Error reading or processing file: " + e.getMessage());
-            }
-        }
-        return result;
-    }
-
-    private boolean isValidComment(String comment) {
-        // 检查是否符合任意一个模式
-        return SIMPLE_TEXT_DIRECTIVE_PATTERN.matcher(comment).matches()
-                || TABLE_DIRECTIVE_PATTERN.matcher(comment).matches()
-                || CHECKBOX_DIRECTIVE_PATTERN.matcher(comment).matches()
-                || IMAGE_DIRECTIVE_PATTERN.matcher(comment).matches();
     }
 
 }
