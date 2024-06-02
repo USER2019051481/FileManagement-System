@@ -20,13 +20,13 @@ public class FileEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "name", columnDefinition = "VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci")
     private String name;
 
     @Column(name = "md5")
     private String md5;
 
-    @Column(name = "path")
+    @Column(name = "path", columnDefinition = "VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci")
     private String path;
 
     @Column(name = "upload_time")
@@ -35,7 +35,7 @@ public class FileEntity {
     @Column(name = "extractKeys_data", columnDefinition = "LONGTEXT")
     private String extractKeys_data;
 
-    @Column(name = "hospital")
+    @Column(name = "hospital", columnDefinition = "VARCHAR(50) CHARACTER SET utf8 COLLATE utf8_unicode_ci")
     private String hospital;
 }
 

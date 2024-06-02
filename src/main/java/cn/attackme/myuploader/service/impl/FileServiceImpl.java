@@ -68,34 +68,21 @@ public class FileServiceImpl implements FileService {
         return fileNames;
     }
 
-    public Map<String, List<String>> deleteFiles(List<String> names, String hospital) {
-        List<String> successfullyDeletedFiles = new ArrayList<>();
-        List<String> failedToDeleteFiles = new ArrayList<>();
-        List<String> excepToDeleteFiles = new ArrayList<>();
+    public Map<String, String> deleteFiles(List<String> names, String hospital) {
+        Map<String, String> filemessage = new HashMap<>();
 
         for (String name : names) {
-            boolean databaseFileDeleted = false;
-            boolean localFileDeleted = false;
             try {
-                databaseFileDeleted = fileUtils.deleteDatabaseFile(name, hospital);
-                localFileDeleted = fileUtils.deleteLocalFile(name);
+                fileUtils.deleteDatabaseFile(name, hospital);
+                fileUtils.deleteLocalFile(name);
+                filemessage.put(name, "删除成功");
             } catch (FileNotFoundException e) {
-                excepToDeleteFiles.add(e.getMessage());
-            }
-
-            if (databaseFileDeleted && localFileDeleted) {
-                successfullyDeletedFiles.add(name);
-            } else {
-                failedToDeleteFiles.add(name);
+                filemessage.put(name, e.getMessage());
+            } catch (Exception e) {
+                filemessage.put(name, "删除失败，"+e.getMessage());
             }
         }
-
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("successfullyDeletedFiles", successfullyDeletedFiles);
-        result.put("failedToDeleteFiles", failedToDeleteFiles);
-        result.put("存在的特殊情况", excepToDeleteFiles);
-
-        return result;
+        return filemessage;
     }
 
     public FileDTO convertToDTO(MultipartFile file, String hospitalName) throws IOException, NoSuchAlgorithmException {

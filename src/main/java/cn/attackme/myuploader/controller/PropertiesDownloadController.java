@@ -4,6 +4,7 @@ import cn.attackme.myuploader.dto.PropertyNodeDTO;
 import cn.attackme.myuploader.repository.PropertiesRespository;
 import cn.attackme.myuploader.service.PropertyService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -30,18 +31,17 @@ public class PropertiesDownloadController {
     /**
      * 通过className返回相应PropertyEntity（查找数据库中最新的数据）
      *
-     * @param className
      * @return
      * @throws JsonProcessingException
      */
     @GetMapping("/download")
     @ApiOperation(value = "获取中英文参数", notes = "根据类名返回相应属性的中英文对应参数")
-    public ResponseEntity<PropertyNodeDTO> downloadProperties(@RequestHeader String className) throws JsonProcessingException {
+    public ResponseEntity<PropertyNodeDTO> downloadProperties(@RequestBody String propertyData) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode jsonNode = mapper.readTree(propertyData);
+        String className = jsonNode.get("className").textValue();
         // 从数据库取出相应className里面的classChineseName和propertyMaps。
         PropertyNodeDTO rootNode = propertyService.concatenateDatabaseValues(propertiesRespository, className , new HashSet<>(),0);
-
-
-        ObjectMapper mapper = new ObjectMapper();
         try {
             return ResponseEntity.ok(rootNode) ;
         } catch (Exception e) {
@@ -49,10 +49,4 @@ public class PropertiesDownloadController {
             return null;
         }
     }
-
-
-
-
-
-
 }

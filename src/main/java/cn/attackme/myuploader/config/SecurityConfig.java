@@ -19,7 +19,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/Authentication").permitAll() // 允许不受保护的端点
+                .antMatchers("/auth").permitAll() // 允许不受保护的端点
                 .antMatchers("/Properties/scan").permitAll()
                 .antMatchers("/PropertiesDownload/download").permitAll()
                 .antMatchers("/swagger-ui.html").permitAll()

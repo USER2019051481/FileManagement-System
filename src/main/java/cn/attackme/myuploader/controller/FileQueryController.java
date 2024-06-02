@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/QueryFile")
+@RequestMapping("/File")
 @CrossOrigin
 @Slf4j
 @Api(tags = "Query File", description = "文件查询")
@@ -26,7 +26,7 @@ public class FileQueryController {
     @Autowired
     private FileService fileService;
 
-    @GetMapping
+    @GetMapping("/Query")
     @ApiOperation(value = "文件查询", notes = "认证后用户只能获得所属医院的文件信息")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     public ResponseEntity<?> queryFile() {

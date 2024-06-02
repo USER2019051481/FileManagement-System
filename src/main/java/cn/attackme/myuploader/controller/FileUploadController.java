@@ -56,11 +56,11 @@ public class FileUploadController {
     @PostMapping("/Upload")
     @ApiOperation(value = "文件上传", notes = "实现多文件上传，控制总文件大小<100000MB，同时判断文件重命名和内容重复情况")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
-    public ResponseEntity<String> multiUpload( @RequestHeader("files") MultipartFile[] files) {
+    public ResponseEntity<?> multiUpload( @RequestParam("files") MultipartFile[] files) {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not authenticated");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("身份未认证");
         }
         String hospitalName = (String) authentication.getPrincipal();
 

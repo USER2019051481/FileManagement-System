@@ -1,6 +1,7 @@
 package cn.attackme.myuploader;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Component
 public class TokenFilter extends OncePerRequestFilter {
@@ -31,6 +34,15 @@ public class TokenFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+        if (request.getMethod().equals("OPTIONS")) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+
         // 从header中拿到token
         String token = extractTokenFromRequest(request);
         if (token != null && validateToken(token)) {
@@ -54,12 +66,11 @@ public class TokenFilter extends OncePerRequestFilter {
 
 
     public String extractHospitalName(String token) {
-//        System.out.println(secretKey);
         Claims claims = Jwts.parser()
                 .setSigningKey(secretKey)
                 .parseClaimsJws(token)
                 .getBody();
-        return claims.getSubject();  //获取主体信息
+        return (String) claims.get("hospitalName");  //获取主体信息
     }
 
     /**
@@ -68,14 +79,26 @@ public class TokenFilter extends OncePerRequestFilter {
      * @return
      */
     public Boolean validateToken(String token) {
-        if(Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token)!=null)
+        try {
+            Claims claims = Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody();
+            Date expiration = claims.getExpiration();
+            if (expiration.before(new Date())) {
+                return false; // token has expired
+            }
             return true;
-        else {return false;}
+        } catch (ExpiredJwtException e) {
+            return false; // token has expired
+        } catch (Exception e) {
+            return false; // token is invalid
+        }
     }
 
-    public String generateToken(String hospitalName) {
+    public String generateToken(String hospitalName, String workid) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("workid", workid);
+        claims.put("hospitalName", hospitalName); // Add hospitalName to the claims map
         return Jwts.builder()
-                .setSubject(hospitalName)
+                .setClaims(claims)
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(SignatureAlgorithm.HS512, secretKey)
                 .compact();

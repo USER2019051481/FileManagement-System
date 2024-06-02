@@ -23,7 +23,7 @@ public interface FileService {
 
     public List<String> queryFiles(String hospital);
 
-    public Map<String, List<String>> deleteFiles(List<String> names, String hospital);
+    public Map<String, String> deleteFiles(List<String> names, String hospital);
 
     /**
      * MultipartFile转为FileDTO

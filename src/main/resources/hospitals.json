@@ -1,10 +1,14 @@
 [
   {
     "hospitalName": "jxsr",
-    "password": "123"
+    "password": "jxsr"
   },
   {
     "hospitalName": "gdsfy",
-    "password": "456"
+    "password": "gdsfy"
+  },
+  {
+    "hospitalName": "admin",
+    "password": "admin"
   }
 ]

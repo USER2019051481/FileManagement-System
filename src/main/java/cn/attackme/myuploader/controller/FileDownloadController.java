@@ -22,7 +22,7 @@ import static org.springframework.http.MediaType.TEXT_PLAIN_VALUE;
  * 文件下载
  */
 @Controller
-    @RequestMapping("/DownloadFile")
+@RequestMapping("/File")
 @Api(tags = "Download File ", description = "文件下载")
 public class FileDownloadController {
     private static final String DOWNLOAD_DIRECTORY = "./upload/"; // 您的文件存放目录
@@ -32,7 +32,7 @@ public class FileDownloadController {
      * @param filename 文件名
      * @return 返回文件
      */
-    @GetMapping("/{filename:.+}")
+    @GetMapping("/download/{filename:.+}")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     @ApiOperation(value = "下载文件", notes = "根据文件名下载对应的文件")
     public ResponseEntity<Resource> downloadFile(@PathVariable String filename) {
