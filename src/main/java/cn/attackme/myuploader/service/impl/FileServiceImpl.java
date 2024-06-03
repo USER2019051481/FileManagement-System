@@ -11,6 +11,8 @@ import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.poi.hwpf.HWPFDocument;
@@ -59,13 +61,17 @@ public class FileServiceImpl implements FileService {
         }
     }
 
-    public List<String> queryFiles(String hospital){
+    public String queryFiles(String hospital) throws JsonProcessingException {
         List<String> fileNames = new ArrayList<>();
         List<FileEntity> files = fileRepository.findAllByHospital(hospital);
+        Map<String, String> fileMap = new HashMap<>();
         for (FileEntity file : files) {
-            fileNames.add(file.getName());
+            fileMap.put("name",file.getName());
         }
-        return fileNames;
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = mapper.writeValueAsString(fileMap);
+
+        return jsonString;
     }
 
     public Map<String, String> deleteFiles(List<String> names, String hospital) {

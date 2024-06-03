@@ -24,6 +24,7 @@ public class FileDeleteController {
     @Autowired
     private FileService fileService;
 
+    @ResponseBody
     @DeleteMapping("/Delete")
     @ApiOperation(value = "删除文件", notes = "通过文件名删除文件，可以实现多文件删除、数据库和本地同步删除")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")

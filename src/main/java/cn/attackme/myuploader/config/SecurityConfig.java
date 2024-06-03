@@ -18,14 +18,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .csrf().disable()
+                .requiresChannel().anyRequest().requiresSecure() // 要求所有请求使用HTTPS
+                .and()
                 .authorizeRequests()
-                .antMatchers("/auth").permitAll() // 允许不受保护的端点
-                .antMatchers("/Properties/scan").permitAll()
-                .antMatchers("/PropertiesDownload/download").permitAll()
-                .antMatchers("/swagger-ui.html").permitAll()
-                .antMatchers("/webjars/**", "/swagger-resources/**", "/v2/api-docs", "/swagger-ui.html").permitAll() // 允许访问Swagger UI的资源
+                .antMatchers("/auth", "/Properties/scan", "/PropertiesDownload/download", "/swagger-ui.html", "/webjars/**", "/swagger-resources/**", "/v2/api-docs", "/swagger-ui.html","/Ex").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class); // 添加自定义的Token拦截器
+                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
     }
 }

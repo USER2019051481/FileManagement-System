@@ -1,6 +1,7 @@
 package cn.attackme.myuploader.service;
 
 import cn.attackme.myuploader.dto.FileDTO;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -21,7 +22,7 @@ public interface FileService {
     */
     public void upload(FileDTO fileDTO) ;
 
-    public List<String> queryFiles(String hospital);
+    public String queryFiles(String hospital) throws JsonProcessingException;
 
     public Map<String, String> deleteFiles(List<String> names, String hospital);
 

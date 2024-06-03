@@ -33,4 +33,9 @@ public class TestExceptionController {
             logToFile(e);
         }
     }
+
+    @GetMapping
+    public String test(){
+        return "ok";
+    }
 }

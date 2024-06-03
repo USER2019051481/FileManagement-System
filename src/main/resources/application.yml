@@ -29,4 +29,7 @@ calculate:
 
 server:
   port: 9091
+  ssl:
+    key-store: classpath:filemodel.pfx
+    key-store-password: lianmed
 

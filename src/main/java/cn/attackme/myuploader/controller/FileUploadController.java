@@ -53,6 +53,7 @@ public class FileUploadController {
     private DataSize maxRequestSize;
 
 
+    @ResponseBody
     @PostMapping("/Upload")
     @ApiOperation(value = "文件上传", notes = "实现多文件上传，控制总文件大小<100000MB，同时判断文件重命名和内容重复情况")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
