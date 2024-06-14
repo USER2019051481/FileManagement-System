@@ -45,7 +45,7 @@ public class JsonUtil {
                                 return entry.getKey();
                         }
                 }
-                return null;
+                throw new Exception("密码错误");
         }
 
 //        private static String generateHS512Key() {

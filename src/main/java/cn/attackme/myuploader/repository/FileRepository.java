@@ -20,10 +20,6 @@ public interface FileRepository extends JpaRepository<FileEntity, Long>{
 
     List<FileEntity> findAllByHospital(String hospital);
 
-    FileEntity findByName(String name);
-
-    FileEntity findByMd5(String md5);
-
     // 注意：以下两个方法的方法名需要按照规范进行命名
     FileEntity getByName(String name);
 

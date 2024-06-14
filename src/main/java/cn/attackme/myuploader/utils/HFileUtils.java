@@ -6,14 +6,10 @@ import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.repository.FileRepository;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
-import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.unit.DataSize;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.security.MessageDigest;
@@ -72,32 +68,15 @@ public class HFileUtils {
         return result.toString();
     }
 
-    //检查文件是否重复上传
-    public void checkFileDuplicate(String name, String md5) {
-        if (fileRepository.findByName(name) != null) {
-            throw new FileDuplicateException("文件名重复");
-        }
-        if (fileRepository.findByMd5(md5) != null) {
-            throw new FileDuplicateException("文件内容重复");
-        }
-
-    }
-
-    //检查文件大小
-    public void checkFileSize(MultipartFile file, DataSize maxSize){
-        if (file.getSize() > maxSize.toBytes()) {
-            throw new FileSizeExceededException("文件大小超过限制");
-        }
-    }
 
     public boolean deleteLocalFile(String name) {
         String filePath = UploadConfig.path + java.io.File.separator + name;
         java.io.File localFile = new java.io.File(filePath);
         if (localFile.exists()) {
-            return localFile.delete();
-        } else {
-            throw new FileNotFoundException(name + ":本地文件not found");
+            localFile.delete();
+            return true;
         }
+        return false;
     }
 
     @Transactional
@@ -106,9 +85,7 @@ public class HFileUtils {
         if (fileRepository.findByNameAndHospital(name, hospital) != null) {
             fileRepository.deleteByName(name);
             return true;
-        } else {
-            throw new FileNotFoundException(name+ ":数据库中文件not found");
         }
+        return false;
     }
-
 }

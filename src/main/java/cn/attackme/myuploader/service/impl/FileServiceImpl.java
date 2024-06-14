@@ -1,5 +1,6 @@
 package cn.attackme.myuploader.service.impl;
 
+import cn.attackme.myuploader.config.UploadConfig;
 import cn.attackme.myuploader.dto.FileDTO;
 import cn.attackme.myuploader.entity.FileEntity;
 import cn.attackme.myuploader.repository.FileRepository;
@@ -10,6 +11,9 @@ import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
 
 import cn.attackme.myuploader.utils.exception.FileNotFoundException;
+import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +24,11 @@ import org.apache.poi.hwpf.usermodel.Paragraph;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -49,20 +57,52 @@ public class FileServiceImpl implements FileService {
 
     @Value("${upload.path}")
     private String uploadPath;
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private DataSize maxFileSize;
+    @Value("${spring.servlet.multipart.max-request-size}")
+    private DataSize maxRequestSize;
 
-
-    public void upload(FileDTO fileDTO) {
+    public String upload(MultipartFile[] files, String hospitalName) throws Exception {
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonObject = new JSONObject();
+        long totalFileSize = 0;
         try {
-            fileUtils.checkFileDuplicate(fileDTO.getName(), fileDTO.getMd5());
-            FileEntity file = fileMapper.INSTANCT.dto2entity(fileDTO) ;
-            fileRepository.save(file);
-        } catch (FileDuplicateException e) {
-            throw e;
+            fileUtils.createUploadDirectory(UploadConfig.path);
+            for (MultipartFile file : files) {
+                if (file.getSize() > maxFileSize.toBytes()) {
+                    jsonObject.put("name", file.getOriginalFilename());
+                    jsonObject.put("error", "文件过大");
+                    jsonArray.add(jsonObject);
+                }
+
+                totalFileSize += file.getSize();
+                if (totalFileSize > maxRequestSize.toBytes()) {
+                    throw new FileSizeExceededException("上传文件总大小超过最大限制");
+                }
+
+                FileDTO fileDTO = convertToDTO(file, hospitalName);
+
+                if (fileRepository.findByNameAndHospital(fileDTO.getName(), fileDTO.getHospital()) != null) {
+                    jsonObject.put("name", file.getOriginalFilename());
+                    jsonObject.put("error", "文件名重复");
+                    jsonArray.add(jsonObject);
+                } else {
+                    FileEntity fileEntity = fileMapper.INSTANCT.dto2entity(fileDTO);
+                    fileRepository.save(fileEntity);
+                }
+            }
+        } catch (FileSizeExceededException e) {
+            jsonObject.put("name", "null");
+            jsonObject.put("error", "剩余文件无法上传");
+            jsonArray.add(jsonObject);
+            String jsonString = jsonArray.toString();
+            return jsonString ;
         }
+        String jsonString = jsonArray.toString();
+        return jsonString;
     }
 
     public String queryFiles(String hospital) throws JsonProcessingException {
-        List<String> fileNames = new ArrayList<>();
         List<FileEntity> files = fileRepository.findAllByHospital(hospital);
         Map<String, String> fileMap = new HashMap<>();
         for (FileEntity file : files) {
@@ -74,21 +114,23 @@ public class FileServiceImpl implements FileService {
         return jsonString;
     }
 
-    public Map<String, String> deleteFiles(List<String> names, String hospital) {
-        Map<String, String> filemessage = new HashMap<>();
-
-        for (String name : names) {
-            try {
-                fileUtils.deleteDatabaseFile(name, hospital);
-                fileUtils.deleteLocalFile(name);
-                filemessage.put(name, "删除成功");
-            } catch (FileNotFoundException e) {
-                filemessage.put(name, e.getMessage());
-            } catch (Exception e) {
-                filemessage.put(name, "删除失败，"+e.getMessage());
+    public String deleteFiles(String fileData, String hospital) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JSONArray jsonArray = new JSONArray();
+        JSONObject jsonObject = new JSONObject();
+        JsonNode rootNode = mapper.readTree(fileData);
+        for (JsonNode node : rootNode) {
+            String name = node.get("names").textValue();
+            boolean delete1 = fileUtils.deleteDatabaseFile(name, hospital);
+            boolean delete2 = fileUtils.deleteLocalFile(name);
+            if (!delete1 || !delete2){
+                jsonObject.put("name", name);
+                jsonObject.put("error", "文件不存在");
             }
         }
-        return filemessage;
+        jsonArray.add(jsonObject);
+        String jsonString = jsonArray.toString();
+        return jsonString;
     }
 
     public FileDTO convertToDTO(MultipartFile file, String hospitalName) throws IOException, NoSuchAlgorithmException {

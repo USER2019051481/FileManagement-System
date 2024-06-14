@@ -21,8 +21,8 @@ upload:
   path: ./upload/
 
 basePackage:
-  path: "cn.attackme.myuploader.domain"
-  root: "cn.attackme.myuploader"
+  path: "com.lianmed.mchcgen.domain;"
+  root: "com.lianmed.mchcgen"
 
 calculate:
   value: "MD5"

@@ -24,6 +24,9 @@ public class AuthenticationController {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode jsonNode = mapper.readTree(authData);
         String workid = jsonNode.get("workid").textValue();
+        if (workid == null || workid.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("workid不能为空");
+        }
         String password = jsonNode.get("password").textValue();
         try {
             String hospitalName = jsonUtil.getHospitalName(password);

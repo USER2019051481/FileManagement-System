@@ -36,7 +36,7 @@ public class FileQueryController {
         String hospitalName = (String) authentication.getPrincipal();
         String result = fileService.queryFiles(hospitalName);
         if (result.isEmpty()) {
-            return ResponseEntity.ok("所属医院文件为空");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("所属医院文件为空");
         } else {
             return ResponseEntity.ok(result);
         }
