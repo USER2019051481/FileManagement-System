@@ -7,8 +7,6 @@ import cn.attackme.myuploader.service.FileService;
 import cn.attackme.myuploader.service.ValidateService;
 import cn.attackme.myuploader.utils.HFileUtils;
 import cn.attackme.myuploader.utils.exception.FileDuplicateException;
-import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
-
 
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.*;
@@ -64,34 +62,14 @@ public class FileUploadController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("身份未认证");
         }
         String hospitalName = (String) authentication.getPrincipal();
-
-        Map<String, String> filemessage = new HashMap<>();
-        long totalFileSize = 0;
-
         try {
-            fileUtils.createUploadDirectory(UploadConfig.path);
-
-            for (MultipartFile file : files) {
-                try {
-                    fileUtils.checkFileSize(file, maxFileSize);
-                    totalFileSize += file.getSize();
-                    FileDTO fileDTO = fileService.convertToDTO(file,hospitalName);
-                    fileService.upload(fileDTO);
-                    filemessage.put(file.getOriginalFilename(),"成功");
-                } catch (FileSizeExceededException e) {
-                    filemessage.put(file.getOriginalFilename(),e.getMessage());
-                } catch (FileDuplicateException e) {
-                    filemessage.put(file.getOriginalFilename(),e.getMessage());
-                }
+            String fileMessage = fileService.upload(files, hospitalName);
+            if (fileMessage.equals("[]")){
+                return ResponseEntity.ok("上传成功");
             }
-            if (totalFileSize > maxRequestSize.toBytes()) {
-                return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body("上传文件总大小超过最大限制");
-            }
-            ObjectMapper mapper = new ObjectMapper();
-            String jsonString = mapper.writeValueAsString(filemessage);
-            return ResponseEntity.ok(jsonString);
+            else throw new FileDuplicateException(fileMessage);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("文件上传失败");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 

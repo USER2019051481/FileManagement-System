@@ -87,16 +87,16 @@ public class TokenFilter extends OncePerRequestFilter {
             }
             return true;
         } catch (ExpiredJwtException e) {
-            return false; // token has expired
+            return false;
         } catch (Exception e) {
-            return false; // token is invalid
+            return false;
         }
     }
 
     public String generateToken(String hospitalName, String workid) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("workid", workid);
-        claims.put("hospitalName", hospitalName); // Add hospitalName to the claims map
+        claims.put("hospitalName", hospitalName);
         return Jwts.builder()
                 .setClaims(claims)
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))

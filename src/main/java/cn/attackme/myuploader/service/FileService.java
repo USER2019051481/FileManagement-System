@@ -16,15 +16,12 @@ import java.util.Map;
  */
 
 public interface FileService {
-    /**
-    * 上传文件
-    * @param fileDTO 文件DTO
-    */
-    public void upload(FileDTO fileDTO) ;
+
+    public String upload(MultipartFile[] files, String hospitalName)throws Exception;
 
     public String queryFiles(String hospital) throws JsonProcessingException;
 
-    public Map<String, String> deleteFiles(List<String> names, String hospital);
+    public String deleteFiles(String fileData, String hospital) throws JsonProcessingException;
 
     /**
      * MultipartFile转为FileDTO

@@ -91,6 +91,4 @@ public class IcPushDepartment implements Serializable {
     @Column(name = "sort")
     private Long sort;
 
-
-
 }
