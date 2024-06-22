@@ -108,7 +108,7 @@ public class PropertyServiceImpl implements PropertyService {
         // 要检查的注解类型（使用注解的 Class 对象）
         Class<? extends Annotation>[] relatedAnnotations = new Class[]{
                 OneToOne.class,
-                ManyToOne.class,
+//                ManyToOne.class,
                 ManyToMany.class,
                 OneToMany.class
         };
@@ -119,10 +119,16 @@ public class PropertyServiceImpl implements PropertyService {
                     .anyMatch(annotationClass -> field.getAnnotation(annotationClass) != null); // 传递注解的 Class 对象
 
             if (hasRelationshipAnnotation) {
-                // 如果有关系注解，处理关联
+                // 处理OneToMany、ManyToMany、OneToOne的关联关系
                 processRelatedClass(field, newPropertyEntity, propertyMapEntities);
                 continue;
             }
+            if(field.getAnnotation(ManyToOne.class) != null){
+                // 处理ManyToOne
+                processManyToOne(field,newPropertyEntity,propertyMapEntities) ;
+                continue;
+            }
+
 
             if(field.getAnnotation(ElementCollection.class) != null){
                 // TODO:处理Map
@@ -135,6 +141,38 @@ public class PropertyServiceImpl implements PropertyService {
                 createAndAddToPropertyMaps(field, newPropertyEntity, propertyMapEntities);
             }
         }
+    }
+
+    /**
+     * 处理ManyToOne注解
+     * @param field
+     * @param newPropertyEntity
+     * @param propertyMapEntities
+     * @return
+     */
+    private PropertyMapEntity processManyToOne(Field field, PropertyEntity newPropertyEntity, Set<PropertyMapEntity> propertyMapEntities) {
+        PropertyMapEntity propertyMapEntity = new PropertyMapEntity() ;
+        // 属性的中文注解
+        ApiModelProperty apiModelProperty = field.getAnnotation(ApiModelProperty.class);
+        String property = (apiModelProperty != null) ? apiModelProperty.value() : null; // 没有中文注解
+        // 属性名
+        String fieldName = field.getName() ;
+        // 属性类型
+        Class<?> type = field.getType();
+        // 判断这个Type是不是类，如果是类，就不要
+        if (isClassInProject(type.toString())) {
+            //如果这个Type是类，将他改成class java.jnu
+            propertyMapEntity.setPropertyType("class java.jnu") ;
+        }else{
+            propertyMapEntity.setPropertyType(type.toString()) ;
+        }
+        propertyMapEntity.setPropertyName(fieldName);
+        propertyMapEntity.setPropertyValue(property);
+        propertyMapEntity.setIsLinked("");
+        propertyMapEntity.setPropertyentity(newPropertyEntity); // 属性和类的关联
+        propertyMapEntities.add(propertyMapEntity) ; // 该属性加入集合
+
+        return propertyMapEntity ;  //返回PropertyMapEntity
     }
 
     /**
@@ -301,254 +339,6 @@ public class PropertyServiceImpl implements PropertyService {
      * @param className
      * @return
      */
-//    @Override
-//    // 递归拼接属性值
-//    public String concatenateDatabaseValues(PropertiesRespository propertiesRespository,
-//                                          String className,
-//                                           Set<String> processedClasses
-//                                          ) {
-//        recursionDepth++;  // 递归深度加1
-//        try {
-//
-//            // 检查是否已处理过该类
-//            if (processedClasses.contains(className)) {
-////                log.info("Class already processed in " + className);
-//                return "exits";
-//            }
-//
-//            // 将当前类添加到已处理的集合中
-//            processedClasses.add(className);
-//
-//            PropertyEntity propertyEntity = propertiesRespository.findFirstByClassNameOrderByDateDesc(className);
-//
-//            if (propertyEntity == null) {
-////                log.info("Property entity not found for class: " + className);
-//                return "none";
-//            }
-//
-//            // 获取到多个属性和中文值
-//            Set<PropertyMapEntity> propertyMaps = propertyEntity.getPropertyMaps();
-//            StringBuilder sb = new StringBuilder() ;
-////            Set<String> propertyDetails = new HashSet<>();
-//
-//            for (PropertyMapEntity propertyMap : propertyMaps) {
-//                String propertyName = propertyMap.getPropertyName();
-//                String propertyValue = propertyMap.getPropertyValue();
-//                String propertyType = propertyMap.getPropertyType();
-//                String isLinked = propertyMap.getIsLinked();
-//
-//                // 判断是否关联到本项目的其他实体类
-//                boolean classInProject = isClassInProject(propertyType);
-//
-//                if (classInProject) {
-////                  log.debug("关联到本项目中的其他实体类===================>"+propertyType);
-//                    String nestedClassName = ClassNameExtractor(propertyType);
-//                    // 递归处理关联的类
-//                    String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName  ,processedClasses);
-////                    propertyDetails.add(propertyName + ": "+ propertyValue + nestedProperty);
-//                    sb.append(propertyName + ":"+ propertyValue +"{ "+ nestedProperty+"}," ) ;
-//                } else {
-//                    // 判断是否为Set和List
-//                    boolean collectionType = isListAndSetType(propertyType);
-//                    if (collectionType) {
-//                        // 判断Set和List中是否关联了其他类
-////                        log.debug("==================>该类为Set或者List");
-//                        boolean linkInProject = isClassInProject(isLinked);
-//                        if (linkInProject) {
-//                            // 关联了其他类
-////                            log.debug("==================>该Set或者List关联了其他类: " + isLinked);
-//                            String nestedClassName = ClassNameExtractor(isLinked);
-//                            // 递归处理关联的类
-//                            String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName,processedClasses);
-////                            propertyDetails.add(propertyName + "[i]: "+ propertyValue + nestedProperty);
-//                            sb.append(propertyName + "[i]:"+ propertyValue +"{ "+ nestedProperty+"}," ) ;
-//
-//                        } else {
-//                            // 没有关联其他类
-////                            propertyDetails.add(propertyName + "[i]: " + propertyValue);
-//                            sb.append(propertyName + "[i]:  " + propertyValue+"{null},\n") ;
-//                        }
-//                    } else {
-//                        // 判断是否为Map
-//                        boolean ismapType = isMapType(propertyType);
-//                        if (ismapType) {
-//                            //是Map
-//                            String[] strings = extractValueAfterColon(isLinked);
-////                            propertyDetails.add(propertyName + "." + strings[0] + ": "+propertyValue);
-////                            propertyDetails.add(propertyName + "." + strings[1] + ": "+propertyValue);
-//                            sb.append(propertyName + "." + strings[0] + ":  "+propertyValue+"{null},\n") ;
-//                            sb.append(propertyName + "." + strings[1] + ":  "+propertyValue+"child:null},\n") ;
-//                            // TODO 这里默认map中的值没有关联本项目的其他表
-//                        } else {
-////                            propertyDetails.add(propertyName + ": " + propertyValue);
-//                            sb.append(propertyName + ": " + propertyValue+"{null},\n") ;
-//                        }
-//
-//                    }
-//
-//                }
-//
-//
-//            }
-////            return propertyDetails.toString();
-//            return sb.toString() ;
-//        }finally {
-//            recursionDepth--;  // 递归深度减1
-//            if (recursionDepth == 0) {
-//                processedClasses.clear();  // 只有在递归完全结束时才清空集合
-//            }
-//
-//        }
-//
-//
-//    }
-
-//    @Override
-//// 递归拼接属性值
-//    public String concatenateDatabaseValues(PropertiesRespository propertiesRespository,
-//                                            String className,
-//                                            Set<String> processedClasses,
-//                                            int indentLevel) {
-//        recursionDepth++;  // 递归深度加1
-//        try {
-//            // 检查是否已处理过该类
-//            if (processedClasses.contains(className)) {
-//                return "exits";
-//            }
-//
-//            // 将当前类添加到已处理的集合中
-//            processedClasses.add(className);
-//
-//            PropertyEntity propertyEntity = propertiesRespository.findFirstByClassNameOrderByDateDesc(className);
-//            if (propertyEntity == null) {
-//                return "none";
-//            }
-//
-//            // 获取到多个属性和中文值
-//            Set<PropertyMapEntity> propertyMaps = propertyEntity.getPropertyMaps();
-//            StringBuilder sb = new StringBuilder();
-//
-//            // 根据当前的缩进级别生成缩进字符串
-//            String indent = generateIndent(indentLevel);
-//
-//            for (PropertyMapEntity propertyMap : propertyMaps) {
-//                String propertyName = propertyMap.getPropertyName();
-//                String propertyValue = propertyMap.getPropertyValue();
-//                String propertyType = propertyMap.getPropertyType();
-//                String isLinked = propertyMap.getIsLinked();
-//
-//                // 判断是否关联到本项目的其他实体类
-//                boolean classInProject = isClassInProject(propertyType);
-//
-//                if (classInProject) {
-//                    String nestedClassName = ClassNameExtractor(propertyType);
-//                    // 递归处理关联的类
-//                    String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName, processedClasses, indentLevel + 1);
-//                    sb.append(indent).append(propertyName).append(": ").append(propertyValue).append(" { ").append(nestedProperty).append(" },\n");
-//                } else {
-//                    boolean collectionType = isListAndSetType(propertyType);
-//                    if (collectionType) {
-//                        boolean linkInProject = isClassInProject(isLinked);
-//                        if (linkInProject) {
-//                            String nestedClassName = ClassNameExtractor(isLinked);
-//                            String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName, processedClasses, indentLevel + 1);
-//                            sb.append(indent).append(propertyName).append("[i]: ").append(propertyValue).append(" { ").append(nestedProperty).append(" },\n");
-//                        } else {
-//                            sb.append(indent).append(propertyName).append("[i]: ").append(propertyValue).append(" {null},\n");
-//                        }
-//                    } else {
-//                        boolean isMapType = isMapType(propertyType);
-//                        if (isMapType) {
-//                            String[] strings = extractValueAfterColon(isLinked);
-//                            sb.append(indent).append(propertyName).append(".").append(strings[0]).append(": ").append(propertyValue).append(" {null},\n");
-//                            sb.append(indent).append(propertyName).append(".").append(strings[1]).append(": ").append(propertyValue).append(" {null},\n");
-//                        } else {
-//                            sb.append(indent).append(propertyName).append(": ").append(propertyValue).append(" {null},\n");
-//                        }
-//                    }
-//                }
-//            }
-//            return sb.toString();
-//        } finally {
-//            recursionDepth--;  // 递归深度减1
-//            if (recursionDepth == 0) {
-//                processedClasses.clear();  // 只有在递归完全结束时才清空集合
-//            }
-//        }
-//    }
-//    @Override
-//// 递归拼接属性值
-//    public String concatenateDatabaseValues(PropertiesRespository propertiesRespository,
-//                                            String className,
-//                                            Set<String> currentPath,
-//                                            int indentLevel) {
-//        recursionDepth++;  // 递归深度加1
-//        try {
-//            // 检查当前递归路径中是否已处理过该类
-//            if (currentPath.contains(className)) {
-//                return "exits";
-//            }
-//
-//            // 将当前类添加到当前递归路径的集合中
-//            currentPath.add(className);
-//
-//            PropertyEntity propertyEntity = propertiesRespository.findFirstByClassNameOrderByDateDesc(className);
-//            if (propertyEntity == null) {
-//                return "none";
-//            }
-//
-//            // 获取到多个属性和中文值
-//            Set<PropertyMapEntity> propertyMaps = propertyEntity.getPropertyMaps();
-//            StringBuilder sb = new StringBuilder();
-//
-//            // 根据当前的缩进级别生成缩进字符串
-//            String indent = generateIndent(indentLevel);
-//
-//            for (PropertyMapEntity propertyMap : propertyMaps) {
-//                String propertyName = propertyMap.getPropertyName();
-//                String propertyValue = propertyMap.getPropertyValue();
-//                String propertyType = propertyMap.getPropertyType();
-//                String isLinked = propertyMap.getIsLinked();
-//
-//                // 判断是否关联到本项目的其他实体类
-//                boolean classInProject = isClassInProject(propertyType);
-//
-//                if (classInProject) {
-//                    String nestedClassName = ClassNameExtractor(propertyType);
-//                    // 递归处理关联的类
-//                    String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName, new HashSet<>(currentPath), indentLevel + 1);
-//                    sb.append(indent).append(propertyName).append(": ").append(propertyValue).append(" { ").append(nestedProperty).append(" },\n");
-//                } else {
-//                    boolean collectionType = isListAndSetType(propertyType);
-//                    if (collectionType) {
-//                        boolean linkInProject = isClassInProject(isLinked);
-//                        if (linkInProject) {
-//                            String nestedClassName = ClassNameExtractor(isLinked);
-//                            String nestedProperty = concatenateDatabaseValues(propertiesRespository, nestedClassName, new HashSet<>(currentPath), indentLevel + 1);
-//                            sb.append(indent).append(propertyName).append("[i]: ").append(propertyValue).append(" { ").append(nestedProperty).append(" },\n");
-//                        } else {
-//                            sb.append(indent).append(propertyName).append("[i]: ").append(propertyValue).append(" {null},\n");
-//                        }
-//                    } else {
-//                        boolean isMapType = isMapType(propertyType);
-//                        if (isMapType) {
-//                            String[] strings = extractValueAfterColon(isLinked);
-//                            sb.append(indent).append(propertyName).append(".").append(strings[0]).append(": ").append(propertyValue).append(" {null},\n");
-//                            sb.append(indent).append(propertyName).append(".").append(strings[1]).append(": ").append(propertyValue).append(" {null},\n");
-//                        } else {
-//                            sb.append(indent).append(propertyName).append(": ").append(propertyValue).append(" {null},\n");
-//                        }
-//                    }
-//                }
-//            }
-//            return sb.toString();
-//        } finally {
-//            recursionDepth--;  // 递归深度减1
-//            // 移除当前类名，以便处理下一个递归路径
-//            currentPath.remove(className);
-//        }
-//    }
-
     @Override
     public PropertyNodeDTO concatenateDatabaseValues(PropertiesRespository propertiesRespository,
                                                      String className,
