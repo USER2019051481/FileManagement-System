@@ -36,10 +36,7 @@ public class PropertiesDownloadController {
      */
     @GetMapping("/download")
     @ApiOperation(value = "获取中英文参数", notes = "根据类名返回相应属性的中英文对应参数")
-    public ResponseEntity<PropertyNodeDTO> downloadProperties(@RequestBody String propertyData) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode jsonNode = mapper.readTree(propertyData);
-        String className = jsonNode.get("className").textValue();
+    public ResponseEntity<PropertyNodeDTO> downloadProperties(@RequestParam("className") String className) throws JsonProcessingException {
         // 从数据库取出相应className里面的classChineseName和propertyMaps。
         PropertyNodeDTO rootNode = propertyService.concatenateDatabaseValues(propertiesRespository, className , new HashSet<>(),0);
         try {
