@@ -1,7 +1,7 @@
 package cn.attackme.myuploader.controller;
 
 import cn.attackme.myuploader.TokenFilter;
-import cn.attackme.myuploader.utils.JsonUtil;
+import cn.attackme.myuploader.utils.HospitalUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.annotations.*;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @Api(tags = "Authentication", description = "验证所属医院")
 public class AuthenticationController {
     @Autowired
-    JsonUtil jsonUtil;
+    HospitalUtil hospitalUtil;
 
     @Autowired
     private TokenFilter tokenFilter;
@@ -29,7 +29,7 @@ public class AuthenticationController {
         }
         String password = jsonNode.get("password").textValue();
         try {
-            String hospitalName = jsonUtil.getHospitalName(password);
+            String hospitalName = hospitalUtil.getHospitalName(password);
             String token = tokenFilter.generateToken(hospitalName, workid);
             return ResponseEntity.ok(token);
         } catch (Exception e) {

@@ -18,7 +18,7 @@ spring:
       password: qsS0stzLhORJFkouQkpFTA3pF5JBnmCmctK7YmNNoeXf6plHdBIG/xJ3+s9JFY6sB0vwUsJhoL3oFGmQq0l4Yw==
 
 upload:
-  path: ./upload/
+  path: ./fileModel
 
 basePackage:
   path: "com.lianmed.mchcgen.domain;"
@@ -32,4 +32,3 @@ server:
   ssl:
     key-store: classpath:filemodel.pfx
     key-store-password: lianmed
-

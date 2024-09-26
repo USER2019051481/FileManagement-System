@@ -1,32 +1,22 @@
 package cn.attackme.myuploader.controller;
 
-import cn.attackme.myuploader.config.UploadConfig;
-import cn.attackme.myuploader.dto.FileDTO;
-
 import cn.attackme.myuploader.service.FileService;
 import cn.attackme.myuploader.service.ValidateService;
-import cn.attackme.myuploader.utils.HFileUtils;
-import cn.attackme.myuploader.utils.exception.FileDuplicateException;
-
 import com.alibaba.fastjson.JSONObject;
 import io.swagger.annotations.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.unit.DataSize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 import java.util.*;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 文件上传
@@ -40,38 +30,7 @@ public class FileUploadController {
     @Autowired
     private FileService fileService;
     @Autowired
-    private HFileUtils fileUtils;
-    @Autowired
     private ValidateService validateService;
-
-    @Value("${spring.servlet.multipart.max-file-size}")
-    private DataSize maxFileSize;
-
-    @Value("${spring.servlet.multipart.max-request-size}")
-    private DataSize maxRequestSize;
-
-
-    @ResponseBody
-    @PostMapping("/Upload")
-    @ApiOperation(value = "文件上传", notes = "实现多文件上传，控制总文件大小<100000MB，同时判断文件重命名和内容重复情况")
-    @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
-    public ResponseEntity<?> multiUpload( @RequestParam("files") MultipartFile[] files) {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("身份未认证");
-        }
-        String hospitalName = (String) authentication.getPrincipal();
-        try {
-            String fileMessage = fileService.upload(files, hospitalName);
-            if (fileMessage.equals("[]")){
-                return ResponseEntity.ok("上传成功");
-            }
-            else throw new FileDuplicateException(fileMessage);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
-        }
-    }
 
     /**
      *  判断上传文件与已有文件是否存在冲突
@@ -83,11 +42,16 @@ public class FileUploadController {
     @ApiOperation(value = "文件冲突检测", notes = "检查上传文件和已有文件之间的内容冲突信息")
     @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
     public ResponseEntity<List<String>> getFileConflicts(@RequestHeader("files") MultipartFile[] files) throws IOException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.singletonList("身份未认证"));
+        }
+        String hospital = (String) authentication.getPrincipal();
 
         // 存储冲突行的列表
         List<String> conflictLines = new ArrayList<>() ;
         // 调用FileService获取冲突信息
-       boolean hasConflict = fileService.isConflict(files,conflictLines) ;
+       boolean hasConflict = fileService.isConflict(files,conflictLines,hospital) ;
 
 
         String jsonString = JSONObject.toJSONString(conflictLines);

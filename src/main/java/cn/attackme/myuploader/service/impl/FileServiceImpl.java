@@ -1,16 +1,7 @@
 package cn.attackme.myuploader.service.impl;
 
-import cn.attackme.myuploader.config.UploadConfig;
-import cn.attackme.myuploader.dto.FileDTO;
-import cn.attackme.myuploader.entity.FileEntity;
-import cn.attackme.myuploader.repository.FileRepository;
 import cn.attackme.myuploader.service.FileService;
-import cn.attackme.myuploader.service.Mapper.FileMapper;
 
-import cn.attackme.myuploader.utils.HFileUtils;
-import cn.attackme.myuploader.utils.exception.FileDuplicateException;
-
-import cn.attackme.myuploader.utils.exception.FileNotFoundException;
 import cn.attackme.myuploader.utils.exception.FileSizeExceededException;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -19,41 +10,34 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
+import lombok.var;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Paragraph;
 import org.apache.poi.hwpf.usermodel.Range;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.unit.DataSize;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import java.io.InputStream;
-import java.security.NoSuchAlgorithmException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.regex.Pattern;
 
 
 @Service
 @Slf4j
 public class FileServiceImpl implements FileService {
     @Autowired
-    private FileRepository fileRepository;
-    @Autowired
-    private HFileUtils fileUtils;
-    @Resource
-    private FileMapper fileMapper ;
-    @Autowired
     private FileService fileService ;
-
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -62,98 +46,146 @@ public class FileServiceImpl implements FileService {
     @Value("${spring.servlet.multipart.max-request-size}")
     private DataSize maxRequestSize;
 
-    public String upload(MultipartFile[] files, String hospitalName) throws Exception {
+    @Override
+    public String uploadFiles(MultipartFile[] files, String hospital) throws Exception {
         JSONArray jsonArray = new JSONArray();
-        JSONObject jsonObject = new JSONObject();
         long totalFileSize = 0;
+
+        String directoryPath = uploadPath + "/" + hospital;
+        File directory = new File(directoryPath);
+
+        if (!directory.exists()) {
+            if (!directory.mkdirs()) {
+                throw new IOException("文件夹创建失败: " + directoryPath);
+            }
+        }
         try {
-            fileUtils.createUploadDirectory(UploadConfig.path);
             for (MultipartFile file : files) {
                 if (file.getSize() > maxFileSize.toBytes()) {
+                    JSONObject jsonObject = new JSONObject();
                     jsonObject.put("name", file.getOriginalFilename());
                     jsonObject.put("error", "文件过大");
                     jsonArray.add(jsonObject);
+                    continue;
                 }
-
                 totalFileSize += file.getSize();
                 if (totalFileSize > maxRequestSize.toBytes()) {
                     throw new FileSizeExceededException("上传文件总大小超过最大限制");
                 }
-
-                FileDTO fileDTO = convertToDTO(file, hospitalName);
-
-                if (fileRepository.findByNameAndHospital(fileDTO.getName(), fileDTO.getHospital()) != null) {
-                    jsonObject.put("name", file.getOriginalFilename());
+                // 获取原始文件名
+                String originalFilename = file.getOriginalFilename();
+                // 规范化文件名，获取不带路径的文件名
+                String fileName = FilenameUtils.getName(originalFilename);
+                if(Files.exists(Paths.get(directoryPath, fileName))) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("name", fileName);
                     jsonObject.put("error", "文件名重复");
                     jsonArray.add(jsonObject);
-                } else {
-                    FileEntity fileEntity = fileMapper.INSTANCT.dto2entity(fileDTO);
-                    fileRepository.save(fileEntity);
+                    continue;
                 }
+                Path filePath = Paths.get(directoryPath, fileName);
+                var outputStream = Files.newOutputStream(filePath);
+                outputStream.write(file.getBytes());
             }
         } catch (FileSizeExceededException e) {
-            jsonObject.put("name", "null");
-            jsonObject.put("error", "剩余文件无法上传");
-            jsonArray.add(jsonObject);
-            String jsonString = jsonArray.toString();
-            return jsonString ;
+            return e.getMessage();
         }
-        String jsonString = jsonArray.toString();
-        return jsonString;
-    }
-
-    public String queryFiles(String hospital) throws JsonProcessingException {
-        List<FileEntity> files = fileRepository.findAllByHospital(hospital);
-        Map<String, String> fileMap = new HashMap<>();
-        for (FileEntity file : files) {
-            fileMap.put("name",file.getName());
-        }
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonString = mapper.writeValueAsString(fileMap);
-
-        return jsonString;
-    }
-
-    public String deleteFiles(String fileData, String hospital) throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-        JSONArray jsonArray = new JSONArray();
-        JSONObject jsonObject = new JSONObject();
-        JsonNode rootNode = mapper.readTree(fileData);
-        for (JsonNode node : rootNode) {
-            String name = node.get("names").textValue();
-            boolean delete1 = fileUtils.deleteDatabaseFile(name, hospital);
-            boolean delete2 = fileUtils.deleteLocalFile(name);
-            if (!delete1 || !delete2){
-                jsonObject.put("name", name);
-                jsonObject.put("error", "文件不存在");
-            }
-        }
-        jsonArray.add(jsonObject);
-        String jsonString = jsonArray.toString();
-        return jsonString;
-    }
-
-    public FileDTO convertToDTO(MultipartFile file, String hospitalName) throws IOException, NoSuchAlgorithmException {
-        FileDTO fileDTO = new FileDTO();
-        String path = uploadPath + file.getOriginalFilename();
-        fileDTO.setName(file.getOriginalFilename());
-        fileDTO.setPath(path);
-        fileDTO.setMd5(HFileUtils.write(path, file.getInputStream()));
-        fileDTO.setUploadTime(new Date());
-        fileDTO.setExtractKeysData("");
-        fileDTO.setHospital(hospitalName);
-        return fileDTO;
+        return jsonArray.toString();
     }
 
     @Override
-    public boolean isConflict(MultipartFile[] files, List<String> conflictLines) throws IOException {
+    public String queryFiles(String hospital) throws JsonProcessingException {
+        JSONArray jsonArray = new JSONArray();
+        String directoryPath = uploadPath + "/" + hospital;
+        if (Files.exists(Paths.get(directoryPath))) {
+            try {
+                // 检查文件夹是否为空
+                if (Files.list(Paths.get(directoryPath)).findAny().isPresent()) {
+                    // 遍历文件夹内的所有文件
+                    Files.walk(Paths.get(directoryPath))
+                            .filter(Files::isRegularFile)
+                            .forEach(filePath -> {
+                                String fileName = filePath.getFileName().toString();
+                                JSONObject jsonObject = new JSONObject();
+                                jsonObject.put("name", fileName);
+                                jsonArray.add(jsonObject);
+                            });
+                }
+                // 如果文件夹为空，直接返回空数组的 JSON 字符串
+            } catch (IOException e) {
+                return e.getMessage();
+            }
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = mapper.writeValueAsString(jsonArray);
+        return jsonString;
+    }
+
+    @Override
+    public String deleteFiles(String fileData, String hospital) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JSONArray jsonArray = new JSONArray();
+        JsonNode rootNode = mapper.readTree(fileData);
+        for (JsonNode node : rootNode) {
+            String name = node.get("name").textValue();
+            String filePathString = uploadPath + "/" + hospital + "/" + name;
+            Path filePath = Paths.get(filePathString);
+            if (Files.exists(filePath)) {
+                try {
+                    Files.delete(filePath);
+                } catch (IOException e) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("error", e.toString());
+                    jsonObject.put("name", name);
+                    jsonArray.add(jsonObject);
+                    continue; // 处理下一个文件
+                }
+            } else {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("error", "文件不存在");
+                jsonObject.put("name", name);
+                jsonArray.add(jsonObject);
+            }
+        }
+        String jsonString = jsonArray.toString();
+        return jsonString;
+    }
+
+    @Override
+    public String modifyFiles(MultipartFile file, String newName, String hospital) throws IOException {
+        String name = file.getOriginalFilename();
+        Path currentFilePath = Paths.get(uploadPath + "/" + hospital + "/" + name);
+
+        if (!Files.exists(currentFilePath)) {
+            return "文件未找到";
+        }
+        try {
+            if (newName != null && !newName.isEmpty()) {
+                Path newFilePath = Paths.get(uploadPath + "/" + hospital + "/" + newName);
+                if (Files.exists(newFilePath)) {
+                    return "文件名重复";
+                }
+                Files.copy(file.getInputStream(), currentFilePath, StandardCopyOption.REPLACE_EXISTING);
+                Files.move(currentFilePath, newFilePath, StandardCopyOption.REPLACE_EXISTING);
+            } else {
+                Files.copy(file.getInputStream(), currentFilePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return "文件修改成功";
+        } catch (IOException e) {
+            return "文件修改失败: " + e.getMessage();
+        }
+    }
+
+
+    @Override
+    public boolean isConflict(MultipartFile[] files, List<String> conflictLines, String hospital) throws IOException {
         boolean flag = false;
 
         for (MultipartFile file : files) {
             // 上传文件的名字
             String uploadedFileName = file.getOriginalFilename();
             // 找到服务端相对应的文件
-            File existingFile = fileService.getFileByName(uploadedFileName);
+            File existingFile = fileService.getFileByName(uploadedFileName, hospital);
 
             if (existingFile == null) {
                 log.debug("服务端不存在相应文件。");
@@ -245,9 +277,9 @@ public class FileServiceImpl implements FileService {
 
 
     @Override
-    public File getFileByName(String fileName) {
+    public File getFileByName(String fileName, String hospital) {
         // 根据名字找到服务端文件
-        String filePath = uploadPath+ fileName ;
+        String filePath= uploadPath + "/" + hospital + "/" + fileName;
         // 检查文件是否存在
         File file =  new File(filePath);
         if(file.exists()){

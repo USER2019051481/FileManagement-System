@@ -2,6 +2,8 @@ package cn.attackme.myuploader.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -10,12 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-public class JsonUtil {
+public class HospitalUtil {
         public Map<String, String> readJsonFile() throws Exception {
                 ObjectMapper objectMapper = new ObjectMapper();
 
                 // 使用类加载器加载资源文件
-                InputStream inputStream = JsonUtil.class.getClassLoader().getResourceAsStream("hospitals.json");
+                InputStream inputStream = HospitalUtil.class.getClassLoader().getResourceAsStream("hospitals.json");
                 if (inputStream == null) {
                         throw new Exception("JSON file not found in resources directory");
                 }
@@ -46,6 +48,15 @@ public class JsonUtil {
                         }
                 }
                 throw new Exception("密码错误");
+        }
+
+        public String getAuthenticatedHospital() {
+                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+                if (authentication != null && authentication.isAuthenticated()) {
+                        return (String) authentication.getPrincipal();
+                } else {
+                        throw new SecurityException("身份未认证");
+                }
         }
 
 //        private static String generateHS512Key() {
