@@ -3,6 +3,7 @@ package cn.attackme.myuploader.controller;
 import cn.attackme.myuploader.dto.PropertyNodeDTO;
 import cn.attackme.myuploader.repository.PropertiesRespository;
 import cn.attackme.myuploader.service.PropertyService;
+import cn.attackme.myuploader.service.impl.PropertyLoadServiceImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,10 +12,14 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/PropertiesDownload")
@@ -24,6 +29,8 @@ public class PropertiesDownloadController {
     private PropertiesRespository propertiesRespository ;
     @Autowired
     private PropertyService propertyService ;
+    @Autowired
+    private PropertyLoadServiceImpl propertyLoadService;
 
     @Value("${basePackage.root}")
     private String rootPackageName;
@@ -44,6 +51,23 @@ public class PropertiesDownloadController {
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    @GetMapping
+    public List<Map<String, String>> getAllProperties() {
+        return propertyLoadService.getAllProperties();
+    }
+
+    @GetMapping("/{className}")
+    public ResponseEntity<?> getPropertyByClassName(@PathVariable String className) {
+        try {
+            PropertyNodeDTO propertyNode = propertyLoadService.getPropertyByClassName(className);
+            return ResponseEntity.ok(propertyNode); // 返回200状态和数据
+        } catch (NoSuchElementException ex) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage()); // 返回404和错误信息
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage()); // 处理其他异常
         }
     }
 }

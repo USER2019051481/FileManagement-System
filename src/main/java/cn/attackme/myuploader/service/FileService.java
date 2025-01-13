@@ -20,11 +20,13 @@ public interface FileService {
     public String uploadFiles(MultipartFile[] files, String hospital)throws Exception;
 
     public String queryFiles(String hospital) throws JsonProcessingException;
+    public String queryOldFiles(String fileName, String hospital) throws JsonProcessingException;
 
     public String deleteFiles(String fileData, String hospital) throws JsonProcessingException;
 
-    public String modifyFiles( MultipartFile file, String newName, String hospital) throws IOException;
+    public String deleteOldFiles(String dirname, String fileData, String hospital) throws JsonProcessingException;
 
+    public void deleteOldDirectory(String name, String hospital) throws IOException;
     /**
      * 判断是否存在冲突，并返回冲突行
      *

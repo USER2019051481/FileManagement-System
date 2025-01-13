@@ -27,6 +27,10 @@ basePackage:
 calculate:
   value: "MD5"
 
+swagger:
+  path: "http://pdis.lian-med.com:9999/v2/api-docs?group=lianmed"
+
+
 server:
   port: 9091
   ssl:

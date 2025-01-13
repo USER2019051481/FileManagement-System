@@ -193,8 +193,6 @@ public class PropertyServiceImpl implements PropertyService {
 
     }
 
-
-
     /**
      * 创建注解类放入集合中
      * @param newpropertyEntity
@@ -239,7 +237,6 @@ public class PropertyServiceImpl implements PropertyService {
 
 
     }
-
 
 
     /**
@@ -308,8 +305,6 @@ public class PropertyServiceImpl implements PropertyService {
             propertyMapEntity.setIsLinked(field.getType().toString());
         }
     }
-
-
     /**
      * 将扫描到的属性值和中文值，存入数据库
      * @param propertiesRespository
@@ -326,10 +321,6 @@ public class PropertyServiceImpl implements PropertyService {
         propertiesRespository.save(newpropertyEntity) ;
 
     }
-
-
-
-
     // 递归深度计数器
     private static int recursionDepth = 0;
 
@@ -352,7 +343,6 @@ public class PropertyServiceImpl implements PropertyService {
 //                log.info("该类已经分析过了");
                 return new PropertyNodeDTO(className, "null","class");
             }
-
             currentPath.add(className);
 
             PropertyEntity propertyEntity = propertiesRespository.findFirstByClassNameOrderByDateDesc(className);
@@ -364,7 +354,6 @@ public class PropertyServiceImpl implements PropertyService {
             // 类的中文名
             String classChineseName = propertyEntity.getClassChineseName();
             PropertyNodeDTO rootNode = new PropertyNodeDTO(className, classChineseName,"class");
-
             Set<PropertyMapEntity> propertyMaps = propertyEntity.getPropertyMaps();
             if (propertyMaps != null) { // 检查属性映射集合是否为空
                 for (PropertyMapEntity propertyMap : propertyMaps) {
@@ -392,6 +381,7 @@ public class PropertyServiceImpl implements PropertyService {
                     } else if (isMapType(propertyType)) {
 //                        log.info("是map");
                         String[] strings = extractValueAfterColon(isLinked);
+
                         rootNode.addChild(new PropertyNodeDTO(propertyName + "." + strings[0], propertyValue,"property"));
                         rootNode.addChild(new PropertyNodeDTO(propertyName + "." + strings[1], propertyValue,"property"));
                     } else {
@@ -409,11 +399,6 @@ public class PropertyServiceImpl implements PropertyService {
             currentPath.remove(className);
         }
     }
-
-
-
-
-
     private String generateIndent(int indentLevel) {
         StringBuilder indent = new StringBuilder();
         indent.append("\n") ;
@@ -422,9 +407,6 @@ public class PropertyServiceImpl implements PropertyService {
         }
         return indent.toString();
     }
-
-
-
     private String[] extractValueAfterColon(String isLinked) {
         // 正则表达式，匹配两个冒号后面的内容
         String regex = ":\\s*(\\w+).*?:\\s*(\\w+)"; // 匹配两个冒号后的单词
@@ -438,7 +420,6 @@ public class PropertyServiceImpl implements PropertyService {
             extractedValues[0] = matcher.group(1); // 获取第一个捕获的单词
             extractedValues[1] = matcher.group(2); // 获取第二个捕获的单词
         }
-
         return extractedValues; // 返回匹配的内容
     }
 

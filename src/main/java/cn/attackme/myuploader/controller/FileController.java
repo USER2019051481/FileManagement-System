@@ -71,14 +71,11 @@ public class FileController {
     }
 
     @ResponseBody
-    @PostMapping("/modify")
-    @ApiOperation(value = "文件修改", notes = "通过文件名更新文件，重命名或者文件内容")
-    @ApiImplicitParam(name = "Authorization", value = "Bearer 访问令牌", required = true, dataTypeClass = String.class, paramType = "header")
-    public ResponseEntity<?> modifyFiles(@RequestParam("file") MultipartFile file,
-                                         @RequestParam(value = "newName", required = false) String newName) {
+    @GetMapping("/queryOld")
+    public ResponseEntity<?> queryFiles(@RequestParam String name) {
         try {
             String hospital = hospitalUtil.getAuthenticatedHospital();
-            String result = fileService.modifyFiles(file,newName, hospital);
+            String result = fileService.queryOldFiles(name,hospital);
             return ResponseEntity.ok(result);
         } catch (SecurityException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
@@ -107,6 +104,37 @@ public class FileController {
         }
     }
 
+    @ResponseBody
+    @DeleteMapping("/deleteOld")
+    public ResponseEntity<?> deleteOldFiles(@RequestParam String dirname,@RequestBody String fileData) {
+        try{
+            String hospital = hospitalUtil.getAuthenticatedHospital();
+            String fileMessage = fileService.deleteOldFiles(dirname,fileData, hospital);
+            if(fileMessage.equals("[]")){
+                return ResponseEntity.ok("删除成功");
+            }
+            else return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(fileMessage);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @ResponseBody
+    @DeleteMapping("/deleteDir")
+    public ResponseEntity<?> deleteOldFolder(@RequestParam String name) {
+        try{
+            String hospital = hospitalUtil.getAuthenticatedHospital();
+            fileService.deleteOldDirectory(name, hospital);
+            return ResponseEntity.ok("删除成功");
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
     /**
      * 根据文件名，返回相应文件
      * @param filename 文件名
@@ -120,6 +148,32 @@ public class FileController {
             String hospital = hospitalUtil.getAuthenticatedHospital();
             // 构造文件路径
             String filePathString = uploadPath + "/" + hospital + "/" + filename ;
+            Path filePath = Paths.get(filePathString);
+            // 将文件路径转换为Spring能够识别和处理的资源对象
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists() || resource.isReadable()) {
+                return ResponseEntity.ok()
+                        .contentType(MediaType.valueOf(TEXT_PLAIN_VALUE))
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                        .body(resource);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (SecurityException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/downloadOld/{filename:.+}")
+    public ResponseEntity<?> downloadOldFile(@PathVariable String filename) {
+        try {
+            String hospital = hospitalUtil.getAuthenticatedHospital();
+            String baseName = filename.split("_")[0]; // 取第一个部分作为基本名称
+            String subfolderName = baseName + "_old";
+            String filePathString = uploadPath + "/" + hospital + "/" +subfolderName + "/"+ filename ;
             Path filePath = Paths.get(filePathString);
             // 将文件路径转换为Spring能够识别和处理的资源对象
             Resource resource = new UrlResource(filePath.toUri());

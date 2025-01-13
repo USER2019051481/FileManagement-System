@@ -8,9 +8,11 @@ import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import javassist.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import lombok.var;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.hwpf.HWPFDocument;
 import org.apache.poi.hwpf.usermodel.Paragraph;
@@ -26,11 +28,15 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -52,6 +58,7 @@ public class FileServiceImpl implements FileService {
         long totalFileSize = 0;
 
         String directoryPath = uploadPath + "/" + hospital;
+        Path hospitalPath = Paths.get(uploadPath, hospital);
         File directory = new File(directoryPath);
 
         if (!directory.exists()) {
@@ -72,23 +79,45 @@ public class FileServiceImpl implements FileService {
                 if (totalFileSize > maxRequestSize.toBytes()) {
                     throw new FileSizeExceededException("上传文件总大小超过最大限制");
                 }
-                // 获取原始文件名
-                String originalFilename = file.getOriginalFilename();
-                // 规范化文件名，获取不带路径的文件名
-                String fileName = FilenameUtils.getName(originalFilename);
-                if(Files.exists(Paths.get(directoryPath, fileName))) {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("name", fileName);
-                    jsonObject.put("error", "文件名重复");
-                    jsonArray.add(jsonObject);
-                    continue;
+
+                String baseName = file.getOriginalFilename().split("\\.[^.]+$")[0]; // 去掉上传文件的扩展名
+                String extension = FilenameUtils.getExtension(file.getOriginalFilename());
+
+                // 检查是否有同名文件
+                DirectoryStream.Filter<Path> filter = entry -> {
+                    String entryName = entry.getFileName().toString();
+                    return entryName.startsWith(baseName + "_") && entryName.endsWith("." + extension);
+                };
+
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(hospitalPath, filter)) {
+                    for (Path existingFile : stream) {
+                        // 创建历史版本目录路径
+                        String historyFolderName = baseName + "_old";
+                        Path historyFolderPath = hospitalPath.resolve(historyFolderName);
+                        // 检查历史版本目录是否存在，如果不存在则创建
+                        if (!Files.exists(historyFolderPath)) {
+                            Files.createDirectory(historyFolderPath);
+                        }
+                        Files.move(existingFile, historyFolderPath.resolve(existingFile.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+                    }
                 }
-                Path filePath = Paths.get(directoryPath, fileName);
-                var outputStream = Files.newOutputStream(filePath);
-                outputStream.write(file.getBytes());
+
+                // 添加时间戳并生成新文件名
+                long timestampMillis = System.currentTimeMillis();
+                LocalDateTime localDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(timestampMillis), ZoneId.systemDefault());
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss"); //  自定义格式
+                String timestamp = localDateTime.format(formatter);
+                String newFileName = baseName + "_" + timestamp + (extension.isEmpty() ? "" : "." + extension);
+                Path filePath = Paths.get(directoryPath, newFileName);
+                // 保存文件
+                try (var outputStream = Files.newOutputStream(filePath)) {
+                    outputStream.write(file.getBytes());
+                }
             }
         } catch (FileSizeExceededException e) {
             return e.getMessage();
+        } catch (IOException e) {
+            throw new IOException("文件处理错误: " + e.getMessage(), e);
         }
         return jsonArray.toString();
     }
@@ -99,22 +128,43 @@ public class FileServiceImpl implements FileService {
         String directoryPath = uploadPath + "/" + hospital;
         if (Files.exists(Paths.get(directoryPath))) {
             try {
-                // 检查文件夹是否为空
-                if (Files.list(Paths.get(directoryPath)).findAny().isPresent()) {
-                    // 遍历文件夹内的所有文件
-                    Files.walk(Paths.get(directoryPath))
-                            .filter(Files::isRegularFile)
-                            .forEach(filePath -> {
-                                String fileName = filePath.getFileName().toString();
-                                JSONObject jsonObject = new JSONObject();
-                                jsonObject.put("name", fileName);
-                                jsonArray.add(jsonObject);
-                            });
-                }
-                // 如果文件夹为空，直接返回空数组的 JSON 字符串
+                Files.list(Paths.get(directoryPath))
+                        .forEach(filePath -> {
+                            String fileName = filePath.getFileName().toString();
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("name", fileName);
+                            jsonObject.put("type", Files.isDirectory(filePath) ? "directory" : "file"); // 添加类型字段
+                            jsonArray.add(jsonObject);
+                        });
             } catch (IOException e) {
                 return e.getMessage();
             }
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = mapper.writeValueAsString(jsonArray);
+        return jsonString;
+    }
+
+    public String queryOldFiles(String fileName, String hospital) throws JsonProcessingException {
+        JSONArray jsonArray = new JSONArray();
+        String baseName = fileName.split("_")[0]; // 取第一个部分作为基本名称
+        String folderName = baseName + "_old";
+        String directoryPath = uploadPath + "/" + hospital + "/" + folderName;
+        File folder = new File(directoryPath);
+        try {
+            if (!folder.exists() || !folder.isDirectory()) {
+                throw new NotFoundException("文件夹不存在");
+            }
+            File[] files = folder.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("name", file.getName());
+                    jsonArray.add(jsonObject);
+                }
+            }
+        } catch (Exception e) {
+            return e.getMessage();
         }
         ObjectMapper mapper = new ObjectMapper();
         String jsonString = mapper.writeValueAsString(jsonArray);
@@ -151,31 +201,69 @@ public class FileServiceImpl implements FileService {
         return jsonString;
     }
 
-    @Override
-    public String modifyFiles(MultipartFile file, String newName, String hospital) throws IOException {
-        String name = file.getOriginalFilename();
-        Path currentFilePath = Paths.get(uploadPath + "/" + hospital + "/" + name);
-
-        if (!Files.exists(currentFilePath)) {
-            return "文件未找到";
-        }
-        try {
-            if (newName != null && !newName.isEmpty()) {
-                Path newFilePath = Paths.get(uploadPath + "/" + hospital + "/" + newName);
-                if (Files.exists(newFilePath)) {
-                    return "文件名重复";
+    public String deleteOldFiles(String dirname,String fileData, String hospital) throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode rootNode = mapper.readTree(fileData);
+        Path hospitalPath = Paths.get(uploadPath, hospital);
+        JSONArray jsonArray = new JSONArray();
+        Path subfolderPath = hospitalPath.resolve(dirname);
+        if (Files.exists(subfolderPath) && Files.isDirectory(subfolderPath)) {
+            for (JsonNode node : rootNode) {
+                String filename = node.get("name").textValue();
+                Path filePath = subfolderPath.resolve(filename);;
+                // 检查文件是否存在并尝试删除
+                if (Files.exists(filePath)) {
+                    try {
+                        Files.delete(filePath);
+                    } catch (IOException e) {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("error", e.toString());
+                        jsonObject.put("name", filename);
+                        jsonArray.add(jsonObject);
+                    }
+                } else {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("error", "文件不存在");
+                    jsonObject.put("name", filename);
+                    jsonArray.add(jsonObject);
                 }
-                Files.copy(file.getInputStream(), currentFilePath, StandardCopyOption.REPLACE_EXISTING);
-                Files.move(currentFilePath, newFilePath, StandardCopyOption.REPLACE_EXISTING);
-            } else {
-                Files.copy(file.getInputStream(), currentFilePath, StandardCopyOption.REPLACE_EXISTING);
             }
-            return "文件修改成功";
-        } catch (IOException e) {
-            return "文件修改失败: " + e.getMessage();
+        } else {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("error", "子文件夹不存在");
+            jsonObject.put("name", dirname);
+            jsonArray.add(jsonObject);
         }
+        return jsonArray.toString();
     }
 
+    public void deleteOldDirectory(String name, String hospital) throws IOException {
+        Path hospitalPath = Paths.get(uploadPath, hospital);
+        String subfolderName = name;
+        Path subfolderPath = hospitalPath.resolve(subfolderName);
+        // 删除目录本身
+        if (Files.exists(subfolderPath) && Files.isDirectory(subfolderPath)) {
+            // 使用Files.walkFileTree来递归删除文件和子目录
+            Files.walkFileTree(subfolderPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    throw exc; // 重新抛出异常，以便外部捕获处理
+                }
+            });
+        }
+    }
 
     @Override
     public boolean isConflict(MultipartFile[] files, List<String> conflictLines, String hospital) throws IOException {
